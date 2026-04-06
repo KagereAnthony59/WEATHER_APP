@@ -54,21 +54,52 @@ export const useWeather = () => {
   const [searchResults, setSearchResults] = useState<CitySearchResult[]>([]);
   const [cityImage, setCityImage] = useState<string | null>(null);
 
-  const fetchCityImage = async (cityName: string) => {
+  const fetchCityImage = async (cityName: string, weatherCode?: number, isDay?: number) => {
     try {
-      const res = await axios.get(`https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=thumbnail&pithumbsize=1200&titles=${encodeURIComponent(cityName)}&origin=*`, {
-        headers: { 'User-Agent': 'WeatherAppTest/1.0 (react-native-expo)' }
-      });
-      const pages = res.data?.query?.pages;
-      if (pages) {
-        const pageId = Object.keys(pages)[0];
-        if (pageId !== '-1' && pages[pageId].thumbnail) {
-          setCityImage(pages[pageId].thumbnail.source);
-          return;
-        }
+      const accessKey = process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY;
+      if (!accessKey) {
+        console.warn('Unsplash access key not found in environment');
+        setCityImage(null);
+        return;
       }
+      
+      // Attempt 1: Strict query
+      let res = await axios.get(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(cityName + ' city')}&orientation=portrait&per_page=1&client_id=${accessKey}`);
+      
+      if (res.data && res.data.results && res.data.results.length > 0) {
+        setCityImage(res.data.results[0].urls.regular);
+        return;
+      }
+
+      // Attempt 2: Fallback to just the city name
+      res = await axios.get(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(cityName)}&orientation=portrait&per_page=1&client_id=${accessKey}`);
+      
+      if (res.data && res.data.results && res.data.results.length > 0) {
+        setCityImage(res.data.results[0].urls.regular);
+        return;
+      }
+
+      // Attempt 3: Generic beautiful weather background based on conditions
+      let genericQuery = 'beautiful nature landscape';
+      if (weatherCode !== undefined && isDay !== undefined) {
+        const timeStr = isDay ? 'daytime' : 'nighttime';
+        if (weatherCode <= 3) genericQuery = `clear sky ${timeStr} landscape`;
+        else if (weatherCode <= 48) genericQuery = `cloudy ${timeStr} city`;
+        else if (weatherCode <= 67 || (weatherCode >= 80 && weatherCode <= 82)) genericQuery = `rainy street ${timeStr}`;
+        else if (weatherCode <= 77 || (weatherCode >= 85 && weatherCode <= 86)) genericQuery = `snowy city ${timeStr}`;
+        else if (weatherCode >= 95) genericQuery = `thunderstorm dark city`;
+      }
+
+      res = await axios.get(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(genericQuery)}&orientation=portrait&per_page=1&client_id=${accessKey}`);
+      
+      if (res.data && res.data.results && res.data.results.length > 0) {
+        setCityImage(res.data.results[0].urls.regular);
+        return;
+      }
+      
       setCityImage(null);
     } catch (e) {
+      console.error('Failed to fetch city image from Unsplash:', e);
       setCityImage(null);
     }
   };
@@ -181,7 +212,7 @@ export const useWeather = () => {
       setAddress(placeName);
       setCoordinates({lat: latitude, lon: longitude});
       setErrorMsg(null);
-      fetchCityImage(placeName);
+      fetchCityImage(placeName, current.weather_code, current.is_day);
     } catch (err) {
       setErrorMsg('Failed to fetch weather data');
       console.error(err);
