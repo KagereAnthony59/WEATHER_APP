@@ -21,11 +21,14 @@ export interface WeatherData {
     sunrise: string[];
     sunset: string[];
     uvIndexMax: number[];
+    precipitationSum: number[];
   };
+  yesterdayMaxTemp: number;
   hourly: {
     time: string[];
     temperature: number[];
     weatherCode: number[];
+    precipitationProbability: number[];
   };
 }
 
@@ -177,7 +180,7 @@ export const useWeather = () => {
       setLoading(true);
       
       const [weatherResponse, aqiResponse] = await Promise.all([
-        axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&hourly=temperature_2m,weather_code&timezone=auto`),
+        axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum&hourly=temperature_2m,weather_code,precipitation_probability&timezone=auto&past_days=1`),
         axios.get(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&current=us_aqi&timezone=auto`).catch(() => ({ data: { current: { us_aqi: -1 } } }))
       ]);
       
@@ -195,18 +198,21 @@ export const useWeather = () => {
         isDay: current.is_day,
         aqi: aqiScore,
         daily: {
-          time: daily.time,
-          weatherCode: daily.weather_code,
-          temperatureMax: daily.temperature_2m_max,
-          temperatureMin: daily.temperature_2m_min,
-          sunrise: daily.sunrise,
-          sunset: daily.sunset,
-          uvIndexMax: daily.uv_index_max,
+          time: daily.time.slice(1), // Remove yesterday
+          weatherCode: daily.weather_code.slice(1),
+          temperatureMax: daily.temperature_2m_max.slice(1),
+          temperatureMin: daily.temperature_2m_min.slice(1),
+          sunrise: daily.sunrise.slice(1),
+          sunset: daily.sunset.slice(1),
+          uvIndexMax: daily.uv_index_max.slice(1),
+          precipitationSum: daily.precipitation_sum.slice(1),
         },
+        yesterdayMaxTemp: daily.temperature_2m_max[0],
         hourly: {
-          time: hourly.time,
-          temperature: hourly.temperature_2m,
-          weatherCode: hourly.weather_code,
+          time: hourly.time.slice(24),
+          temperature: hourly.temperature_2m.slice(24),
+          weatherCode: hourly.weather_code.slice(24),
+          precipitationProbability: hourly.precipitation_probability.slice(24),
         }
       });
       setAddress(placeName);
@@ -263,5 +269,25 @@ export const useWeather = () => {
     fetchCurrentLocation();
   }, [fetchCurrentLocation]);
 
-  return { address, coordinates, weather, errorMsg, loading, searchResults, cityImage, autocompleteSearch, fetchCurrentLocation, refreshWeather, savedCities, toggleSavedCity, fetchWeatherBase };
+  const fetchSavedCitiesWeather = async () => {
+    if (savedCities.length === 0) return [];
+    try {
+      const lats = savedCities.map(c => c.latitude).join(',');
+      const lons = savedCities.map(c => c.longitude).join(',');
+      const res = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,weather_code,is_day&timezone=auto`);
+      
+      const data = Array.isArray(res.data) ? res.data : [res.data];
+      return savedCities.map((city, idx) => ({
+        ...city,
+        temp: data[idx].current.temperature_2m,
+        weatherCode: data[idx].current.weather_code,
+        isDay: data[idx].current.is_day,
+      }));
+    } catch (e) {
+      console.error('Bulk fetch error', e);
+      return [];
+    }
+  };
+
+  return { address, coordinates, weather, errorMsg, loading, searchResults, cityImage, autocompleteSearch, fetchCurrentLocation, refreshWeather, savedCities, toggleSavedCity, fetchWeatherBase, fetchSavedCitiesWeather };
 };

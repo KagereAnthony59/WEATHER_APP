@@ -4,17 +4,23 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useWeather, CitySearchResult } from '../hooks/useWeather';
+import { WeatherOverlay } from '../components/WeatherOverlay';
+import { WeatherNarrative } from '../components/WeatherNarrative';
+import { MultiCityDashboard } from '../components/MultiCityDashboard';
+import { WeatherMap } from '../components/WeatherMap';
 
 export default function WeatherScreen() {
-  const { address, coordinates, weather, errorMsg, loading, searchResults, cityImage, autocompleteSearch, fetchCurrentLocation, refreshWeather, savedCities, toggleSavedCity, fetchWeatherBase } = useWeather();
+  const { address, coordinates, weather, errorMsg, loading, searchResults, cityImage, autocompleteSearch, fetchCurrentLocation, refreshWeather, savedCities, toggleSavedCity, fetchWeatherBase, fetchSavedCitiesWeather } = useWeather();
   const [searchQuery, setSearchQuery] = useState('');
   
   // Premium Settings State
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [dashboardVisible, setDashboardVisible] = useState(false);
   const [isFahrenheit, setIsFahrenheit] = useState(false);
   const [isMph, setIsMph] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [is24Hour, setIs24Hour] = useState(false);
+  const [mapVisible, setMapVisible] = useState(false);
   
   const [refreshing, setRefreshing] = useState(false);
 
@@ -118,7 +124,7 @@ export default function WeatherScreen() {
     fetchWeatherBase(city.latitude, city.longitude, city.name);
   };
 
-  const currentHourISO = weather?.hourly?.time.find((t) => new Date(t).getHours() === new Date().getHours() && new Date(t).getDate() === new Date().getDate());
+  const currentHourISO = weather?.hourly?.time?.find((t) => new Date(t).getHours() === new Date().getHours() && new Date(t).getDate() === new Date().getDate());
   const hourlyStartIndex = currentHourISO && weather ? weather.hourly.time.indexOf(currentHourISO) : 0;
   const next24Hours = weather?.hourly ? weather.hourly.time.slice(hourlyStartIndex, hourlyStartIndex + 24) : [];
 
@@ -140,61 +146,58 @@ export default function WeatherScreen() {
     return `${h} ${ampm}`;
   };
 
-  const getWeatherAdvice = (w: typeof weather) => {
-    if (!w) return "";
-    let tempAdvice = "";
-    if (w.temperature > 30) tempAdvice = "It's very hot out, wear light clothes and stay hydrated! ☀️";
-    else if (w.temperature > 20) tempAdvice = "The temperature is quite pleasant. 👕";
-    else if (w.temperature > 10) tempAdvice = "It's a bit chilly, a light jacket is a good idea. 🧥";
-    else if (w.temperature > 0) tempAdvice = "It's cold out! Make sure to bundle up warmly. 🧣";
-    else tempAdvice = "Freezing temperatures! Wear heavy winter gear. 🧤";
-
-    let condAdvice = "";
-    const code = w.weatherCode;
-    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) condAdvice = "It's raining outside, don't forget your umbrella! ☔";
-    else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) condAdvice = "It's snowing, watch out for slippery roads! ❄️";
-    else if (code >= 95 && code <= 99) condAdvice = "Thunderstorms in the area! Best to stay indoors. 🌩️";
-    else if (code >= 45 && code <= 48) condAdvice = "Foggy conditions, drive carefully! 🌫️";
-    else if (w.daily.uvIndexMax[0] > 7 && w.isDay) condAdvice = "Very high UV Index, apply sunscreen! 🕶️";
-
-    return condAdvice ? `${tempAdvice} ${condAdvice}` : tempAdvice;
-  };
 
   // Dynamic Theme
   const t = isDarkMode ? {
     text: '#ffffff',
-    subtext: 'rgba(255,255,255,0.7)',
-    cardBg: 'rgba(0,0,0,0.3)',
-    borderColor: 'rgba(255,255,255,0.1)',
-    searchBg: 'rgba(255, 255, 255, 0.15)',
-    modalBg: '#1E293B',
-    modalBorder: 'rgba(255,255,255,0.1)',
-    pillBg: 'rgba(0,0,0,0.4)',
+    subtext: 'rgba(255,255,255,0.65)',
+    cardBg: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255,255,255,0.15)',
+    searchBg: 'rgba(255, 255, 255, 0.12)',
+    modalBg: '#0F172A',
+    modalBorder: 'rgba(255,255,255,0.15)',
+    pillBg: 'rgba(255, 255, 255, 0.08)',
+    shadow: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.44,
+        shadowRadius: 10.32,
+        elevation: 16,
+    }
   } : {
     text: '#0f172a',
     subtext: '#475569',
-    cardBg: 'rgba(255,255,255,0.5)',
+    cardBg: 'rgba(255,255,255,0.7)',
     borderColor: 'rgba(255,255,255,0.8)',
-    searchBg: 'rgba(255, 255, 255, 0.6)',
+    searchBg: 'rgba(255, 255, 255, 0.8)',
     modalBg: '#f8fafc',
-    modalBorder: 'rgba(0,0,0,0.1)',
-    pillBg: 'rgba(255,255,255,0.8)',
+    modalBorder: 'rgba(0,0,0,0.05)',
+    pillBg: 'rgba(255,255,255,0.9)',
+    shadow: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    }
   };
 
   return (
     <View style={styles.container}>
       <StatusBar style={isDarkMode ? "light" : "dark"} />
       {cityImage && (
-        <ImageBackground source={{ uri: cityImage }} style={StyleSheet.absoluteFill} />
+        <ImageBackground source={{ uri: cityImage ?? undefined }} style={StyleSheet.absoluteFill} />
       )}
       <LinearGradient colors={currentColors} style={[StyleSheet.absoluteFill, { opacity: cityImage ? (isDarkMode ? 0.75 : 0.6) : 1 }]} />
+      
+      {weather && <WeatherOverlay weatherCode={weather.weatherCode} isDay={weather.isDay} />}
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
         
         <View style={{ zIndex: 20 }}>
           <View style={styles.searchContainer}>
             <TextInput
-              style={[styles.searchInput, { backgroundColor: t.searchBg, color: t.text }]}
+              style={[styles.searchInput, { backgroundColor: t.searchBg, color: t.text }, t.shadow]}
               placeholder="Search for a city..."
               placeholderTextColor={t.subtext}
               value={searchQuery}
@@ -208,10 +211,10 @@ export default function WeatherScreen() {
                 }
               }}
             />
-            <TouchableOpacity onPress={fetchCurrentLocation} style={[styles.iconButton, { backgroundColor: t.searchBg }]}>
+            <TouchableOpacity onPress={fetchCurrentLocation} style={[styles.iconButton, { backgroundColor: t.searchBg }, t.shadow]}>
               <Ionicons name="location-outline" size={24} color={t.text} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setSettingsVisible(true)} style={[styles.iconButton, { marginLeft: 10, backgroundColor: t.searchBg }]}>
+            <TouchableOpacity onPress={() => setSettingsVisible(true)} style={[styles.iconButton, { marginLeft: 10, backgroundColor: t.searchBg }, t.shadow]}>
               <Ionicons name="settings-outline" size={24} color={t.text} />
             </TouchableOpacity>
           </View>
@@ -235,9 +238,16 @@ export default function WeatherScreen() {
 
         {savedCities.length > 0 && (
           <View style={styles.savedCitiesWrapper}>
+            <View style={styles.savedCitiesHeader}>
+                <Text style={[styles.savedCitiesTitle, { color: t.text }]}>Saved Cities</Text>
+                <TouchableOpacity onPress={() => setDashboardVisible(true)} style={[styles.dashboardBtn, { backgroundColor: t.searchBg }, t.shadow]}>
+                    <Ionicons name="stats-chart-outline" size={16} color={t.text} />
+                    <Text style={[styles.dashboardBtnText, { color: t.text }]}>Compare</Text>
+                </TouchableOpacity>
+            </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.savedCitiesScroll}>
               {savedCities.map(city => (
-                <TouchableOpacity key={city.name} style={[styles.savedCityPill, { backgroundColor: t.pillBg }]} onPress={() => fetchWeatherBase(city.latitude, city.longitude, city.name)}>
+                <TouchableOpacity key={city.name} style={[styles.savedCityPill, { backgroundColor: t.pillBg }, t.shadow]} onPress={() => fetchWeatherBase(city.latitude, city.longitude, city.name)}>
                   <Ionicons name="star" size={14} color="#f59e0b" />
                   <Text style={[styles.savedCityPillText, { color: t.text }]}>{city.name}</Text>
                 </TouchableOpacity>
@@ -283,45 +293,61 @@ export default function WeatherScreen() {
                 <Text style={[styles.feelsLikeText, { color: t.subtext }]}>Feels like {displayTemp(weather.feelsLike)}°</Text>
 
                 <View style={styles.detailsContainer}>
-                  <View style={[styles.detailCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}>
+                  <View style={[styles.detailCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}>
                     <Ionicons name="water" size={28} color="#38bdf8" />
                     <Text style={[styles.detailText, { color: t.text }]}>{weather.humidity}%</Text>
                     <Text style={[styles.detailLabel, { color: t.subtext }]}>Humidity</Text>
                   </View>
-                  <View style={[styles.detailCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}>
+                  <View style={[styles.detailCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}>
                     <MaterialCommunityIcons name="weather-windy" size={28} color="#94a3b8" />
                     <Text style={[styles.detailText, { color: t.text }]}>{displaySpeed(weather.windSpeed)} {isMph ? 'mph' : 'km/h'}</Text>
                     <Text style={[styles.detailLabel, { color: t.subtext }]}>Wind</Text>
                   </View>
                 </View>
 
-                <View style={[styles.adviceCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}>
-                  <View style={styles.adviceHeader}>
-                    <Ionicons name="bulb-outline" size={20} color="#f59e0b" style={{ marginRight: 8 }} />
-                    <Text style={[styles.adviceTitle, { color: t.text }]}>Smart Tip</Text>
-                  </View>
-                  <Text style={[styles.adviceText, { color: t.text }]}>{getWeatherAdvice(weather)}</Text>
-                </View>
+                <WeatherNarrative weather={weather} theme={t} />
+
               </View>
 
+              {coordinates && (
+                <View style={styles.radarContainer}>
+                  <Text style={[styles.forecastTitle, { color: t.text, marginLeft: 15, marginBottom: 15 }]}>Weather Radar</Text>
+                  <TouchableOpacity 
+                    onPress={() => setMapVisible(true)} 
+                    style={[styles.radarButton, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}
+                  >
+                    <View style={styles.radarInfo}>
+                      <View style={styles.radarIconContainer}>
+                         <Ionicons name="map-outline" size={24} color="#4A90E2" />
+                      </View>
+                      <View style={{ marginLeft: 12 }}>
+                        <Text style={[styles.radarTitle, { color: t.text }]}>Precipitation Radar</Text>
+                        <Text style={[styles.radarSubtitle, { color: t.subtext }]}>View live weather map</Text>
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={t.subtext} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
               <View style={styles.extendedDetailsContainer}>
-                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }]}>
+                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }, t.shadow]}>
                    <Text style={[styles.miniTitle, { color: t.subtext }]}>AQI (US)</Text>
                    <Text style={[styles.miniValue, { color: t.text }, weather.aqi > 100 && { color: '#ef4444' }]}>
                      {weather.aqi > -1 ? weather.aqi : '--'}
                    </Text>
                  </View>
-                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }]}>
+                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }, t.shadow]}>
                    <Text style={[styles.miniTitle, { color: t.subtext }]}>UV Index</Text>
                    <Text style={[styles.miniValue, { color: t.text }, weather.daily.uvIndexMax[0] > 7 && { color: '#f59e0b' }]}>
                      {weather.daily.uvIndexMax[0]}
                    </Text>
                  </View>
-                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }]}>
+                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }, t.shadow]}>
                    <Text style={[styles.miniTitle, { color: t.subtext }]}>Sunrise</Text>
                    <Text style={[styles.miniValue, { color: t.text, fontSize: 16 }]}>{displayTime(weather.daily.sunrise[0])}</Text>
                  </View>
-                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }]}>
+                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }, t.shadow]}>
                    <Text style={[styles.miniTitle, { color: t.subtext }]}>Sunset</Text>
                    <Text style={[styles.miniValue, { color: t.text, fontSize: 16 }]}>{displayTime(weather.daily.sunset[0])}</Text>
                  </View>
@@ -335,7 +361,7 @@ export default function WeatherScreen() {
                       const absoluteIdx = hourlyStartIndex + idx;
                       const isNow = idx === 0;
                       return (
-                        <View key={time} style={[styles.forecastCard, { backgroundColor: t.cardBg, borderColor: getForecastBorderColor(weather.hourly.weatherCode[absoluteIdx], new Date(time).getHours() >= 6 && new Date(time).getHours() < 19 ? 1 : 0), borderWidth: 1.5 }, isNow && { borderColor: t.text, borderWidth: 2.5 }]}>
+                        <View key={time} style={[styles.forecastCard, { backgroundColor: t.cardBg, borderColor: getForecastBorderColor(weather.hourly.weatherCode[absoluteIdx], new Date(time).getHours() >= 6 && new Date(time).getHours() < 19 ? 1 : 0), borderWidth: 1.5 }, isNow && { borderColor: t.text, borderWidth: 2.5 }, t.shadow]}>
                           <Text style={[styles.forecastDay, { color: t.text }]}>{isNow ? 'Now' : getHourFormat(time)}</Text>
                           <WeatherIcon code={weather.hourly.weatherCode[absoluteIdx]} isDay={new Date(time).getHours() >= 6 && new Date(time).getHours() < 19 ? 1 : 0} size={32} style={{ marginVertical: 8 }} />
                           <Text style={[styles.forecastTemp, { color: t.text }]}>{displayTemp(weather.hourly.temperature[absoluteIdx])}°</Text>
@@ -354,7 +380,7 @@ export default function WeatherScreen() {
                       const date = new Date(time);
                       const isToday = new Date().toDateString() === date.toDateString();
                       return (
-                        <View key={time} style={[styles.forecastCard, { backgroundColor: t.cardBg, borderColor: getForecastBorderColor(weather.daily.weatherCode[idx], 1), borderWidth: 1.5 }]}>
+                        <View key={time} style={[styles.forecastCard, { backgroundColor: t.cardBg, borderColor: getForecastBorderColor(weather.daily.weatherCode[idx], 1), borderWidth: 1.5 }, t.shadow]}>
                           <Text style={[styles.forecastDay, { color: t.text }]}>{isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}</Text>
                           <WeatherIcon code={weather.daily.weatherCode[idx]} isDay={1} size={36} style={{ marginVertical: 8 }} />
                           <Text style={[styles.forecastTemp, { color: t.text }]}>{displayTemp(weather.daily.temperatureMax[idx])}°</Text>
@@ -413,6 +439,24 @@ export default function WeatherScreen() {
             </View>
           </View>
         </Modal>
+
+      <MultiCityDashboard 
+          visible={dashboardVisible} 
+          onClose={() => setDashboardVisible(false)} 
+          fetchData={fetchSavedCitiesWeather}
+          onSelectCity={fetchWeatherBase}
+          theme={t}
+      />
+
+      {coordinates && (
+        <WeatherMap 
+          visible={mapVisible} 
+          onClose={() => setMapVisible(false)} 
+          initialLocation={{ lat: coordinates.lat, lon: coordinates.lon, name: address }}
+          savedCities={savedCities}
+          theme={t}
+        />
+      )}
 
       </KeyboardAvoidingView>
     </View>
@@ -481,6 +525,31 @@ const styles = StyleSheet.create({
   savedCityPillText: {
     marginLeft: 5,
     fontWeight: '500',
+  },
+  savedCitiesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    marginBottom: 10,
+  },
+  savedCitiesTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    opacity: 0.6,
+  },
+  dashboardBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 6,
+  },
+  dashboardBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -678,5 +747,40 @@ const styles = StyleSheet.create({
   settingSubtext: {
     fontSize: 14,
     marginTop: 4,
+  },
+  radarContainer: {
+    width: '100%',
+    paddingVertical: 10,
+    marginBottom: 20,
+  },
+  radarButton: {
+    width: '100%',
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 0,
+  },
+  radarInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  radarIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radarTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  radarSubtitle: {
+    fontSize: 14,
+    opacity: 0.8,
   },
 });
