@@ -8,26 +8,54 @@ import { WeatherOverlay } from '../components/WeatherOverlay';
 import { WeatherNarrative } from '../components/WeatherNarrative';
 import { MultiCityDashboard } from '../components/MultiCityDashboard';
 import { WeatherMap } from '../components/WeatherMap';
+import { SoundscapePlayer } from '../components/SoundscapePlayer';
+import { LifestyleAdvisories } from '../components/LifestyleAdvisories';
+import { CelestialArc } from '../components/CelestialArc';
+import { HealthMetrics } from '../components/HealthMetrics';
+import { TimeTravelSlider } from '../components/TimeTravelSlider';
+import { WeatherShareCard } from '../components/WeatherShareCard';
+import { triggerImpactLight, triggerImpactMedium, triggerSelection } from '../utils/haptics';
 
 export default function WeatherScreen() {
-  const { address, coordinates, weather, errorMsg, loading, searchResults, cityImage, autocompleteSearch, fetchCurrentLocation, refreshWeather, savedCities, toggleSavedCity, fetchWeatherBase, fetchSavedCitiesWeather } = useWeather();
+  const { 
+    address, 
+    coordinates, 
+    weather, 
+    errorMsg, 
+    loading, 
+    isCached,
+    searchResults, 
+    cityImage, 
+    autocompleteSearch, 
+    fetchCurrentLocation, 
+    refreshWeather, 
+    savedCities, 
+    toggleSavedCity, 
+    fetchWeatherBase, 
+    fetchSavedCitiesWeather 
+  } = useWeather();
+  
   const [searchQuery, setSearchQuery] = useState('');
   
   // Premium Settings State
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [dashboardVisible, setDashboardVisible] = useState(false);
+  const [shareCardVisible, setShareCardVisible] = useState(false);
   const [isFahrenheit, setIsFahrenheit] = useState(false);
   const [isMph, setIsMph] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [is24Hour, setIs24Hour] = useState(false);
   const [mapVisible, setMapVisible] = useState(false);
   
-  const [refreshing, setRefreshing] = useState(false);
+  // Time travel scrubber preview
+  const [previewHourIndex, setPreviewHourIndex] = useState<number | null>(null);
 
+  const [refreshing, setRefreshing] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Refresh handler
   const onRefresh = useCallback(async () => {
+    triggerImpactLight();
     setRefreshing(true);
     await refreshWeather();
     setRefreshing(false);
@@ -37,7 +65,7 @@ export default function WeatherScreen() {
     if (!loading) {
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1200,
+        duration: 800,
         useNativeDriver: true,
       }).start();
     } else {
@@ -107,45 +135,56 @@ export default function WeatherScreen() {
     }
   };
 
+  // Active or Preview weather data
+  const isPreviewing = previewHourIndex !== null && weather?.hourly?.temperature[previewHourIndex] !== undefined;
+  
+  const currentTemp = isPreviewing 
+    ? weather!.hourly.temperature[previewHourIndex!]
+    : (weather?.temperature ?? 0);
+
+  const currentFeelsLike = isPreviewing 
+    ? weather!.hourly.apparentTemperature[previewHourIndex!]
+    : (weather?.feelsLike ?? 0);
+
+  const currentCode = isPreviewing 
+    ? weather!.hourly.weatherCode[previewHourIndex!]
+    : (weather?.weatherCode ?? 0);
+
+  const currentIsDay = isPreviewing 
+    ? weather!.hourly.isDay[previewHourIndex!]
+    : (weather?.isDay ?? 1);
+
+  const currentHumidity = isPreviewing 
+    ? weather!.hourly.relativeHumidity[previewHourIndex!]
+    : (weather?.humidity ?? 0);
+
+  const currentWind = isPreviewing 
+    ? weather!.hourly.windSpeed[previewHourIndex!]
+    : (weather?.windSpeed ?? 0);
+
   const currentColors = weather 
-    ? getGradientColors(weather.weatherCode, weather.isDay)
+    ? getGradientColors(currentCode, currentIsDay)
     : (isDarkMode ? ['#0f172a', '#020617'] as const : ['#7dd3fc', '#e0f2fe'] as const);
 
   const isSaved = savedCities.some(c => c.name === address);
   const handleToggleSave = () => {
+    triggerImpactMedium();
     if (coordinates) {
       toggleSavedCity(address, coordinates.lat, coordinates.lon);
     }
   };
 
   const handleSelectCity = (city: CitySearchResult) => {
+    triggerSelection();
     setSearchQuery('');
     autocompleteSearch('');
+    setPreviewHourIndex(null);
     fetchWeatherBase(city.latitude, city.longitude, city.name);
   };
-
-  const currentHourISO = weather?.hourly?.time?.find((t) => new Date(t).getHours() === new Date().getHours() && new Date(t).getDate() === new Date().getDate());
-  const hourlyStartIndex = currentHourISO && weather ? weather.hourly.time.indexOf(currentHourISO) : 0;
-  const next24Hours = weather?.hourly ? weather.hourly.time.slice(hourlyStartIndex, hourlyStartIndex + 24) : [];
 
   // Formatters
   const displayTemp = (c: number) => Math.round(isFahrenheit ? (c * 9/5) + 32 : c);
   const displaySpeed = (kmh: number) => Math.round(isMph ? kmh * 0.621371 : kmh);
-  const displayTime = (isoString: string) => {
-    const d = new Date(isoString);
-    return is24Hour ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) 
-                    : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-  };
-  const getHourFormat = (isoString: string) => {
-    const d = new Date(isoString);
-    if (is24Hour) return d.getHours() + ':00';
-    let h = d.getHours();
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12;
-    return `${h} ${ampm}`;
-  };
-
 
   // Dynamic Theme
   const t = isDarkMode ? {
@@ -186,19 +225,20 @@ export default function WeatherScreen() {
     <View style={styles.container}>
       <StatusBar style={isDarkMode ? "light" : "dark"} />
       {cityImage && (
-        <ImageBackground source={{ uri: cityImage ?? undefined }} style={StyleSheet.absoluteFill} />
+        <ImageBackground source={{ uri: cityImage }} style={StyleSheet.absoluteFill} />
       )}
       <LinearGradient colors={currentColors} style={[StyleSheet.absoluteFill, { opacity: cityImage ? (isDarkMode ? 0.75 : 0.6) : 1 }]} />
       
-      {weather && <WeatherOverlay weatherCode={weather.weatherCode} isDay={weather.isDay} />}
+      {weather && <WeatherOverlay weatherCode={currentCode} isDay={currentIsDay} />}
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
         
-        <View style={{ zIndex: 20 }}>
+        {/* Top Floating Control Bar */}
+        <View style={{ zIndex: 20, paddingTop: Platform.OS === 'android' ? 10 : 0 }}>
           <View style={styles.searchContainer}>
             <TextInput
               style={[styles.searchInput, { backgroundColor: t.searchBg, color: t.text }, t.shadow]}
-              placeholder="Search for a city..."
+              placeholder="Search city or country..."
               placeholderTextColor={t.subtext}
               value={searchQuery}
               onChangeText={(text) => {
@@ -211,14 +251,21 @@ export default function WeatherScreen() {
                 }
               }}
             />
+            
             <TouchableOpacity onPress={fetchCurrentLocation} style={[styles.iconButton, { backgroundColor: t.searchBg }, t.shadow]}>
-              <Ionicons name="location-outline" size={24} color={t.text} />
+              <Ionicons name="location-outline" size={20} color={t.text} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setSettingsVisible(true)} style={[styles.iconButton, { marginLeft: 10, backgroundColor: t.searchBg }, t.shadow]}>
-              <Ionicons name="settings-outline" size={24} color={t.text} />
+
+            <TouchableOpacity onPress={() => { triggerImpactLight(); setShareCardVisible(true); }} style={[styles.iconButton, { backgroundColor: t.searchBg }, t.shadow]}>
+              <Ionicons name="share-social-outline" size={20} color={t.text} />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => { triggerImpactLight(); setSettingsVisible(true); }} style={[styles.iconButton, { backgroundColor: t.searchBg }, t.shadow]}>
+              <Ionicons name="settings-outline" size={20} color={t.text} />
             </TouchableOpacity>
           </View>
 
+          {/* Autocomplete Dropdown */}
           {searchResults.length > 0 && searchQuery.length > 1 && (
             <View style={[styles.autocompleteContainer, { backgroundColor: t.modalBg, borderColor: t.modalBorder }]}>
               <ScrollView style={{ maxHeight: 240 }} keyboardShouldPersistTaps="handled">
@@ -234,21 +281,35 @@ export default function WeatherScreen() {
               </ScrollView>
             </View>
           )}
+
+          {/* Quick Toolbar (Soundscape + Saved Cities compare) */}
+          <View style={styles.quickBarRow}>
+            <SoundscapePlayer weatherCode={currentCode} isDay={currentIsDay} theme={t} />
+
+            {savedCities.length > 0 && (
+              <TouchableOpacity onPress={() => { triggerSelection(); setDashboardVisible(true); }} style={[styles.comparePill, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}>
+                <Ionicons name="stats-chart-outline" size={14} color="#38bdf8" />
+                <Text style={[styles.comparePillText, { color: t.text }]}>Compare ({savedCities.length})</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
+        {/* Saved Cities Horizontal Quick Bar */}
         {savedCities.length > 0 && (
           <View style={styles.savedCitiesWrapper}>
-            <View style={styles.savedCitiesHeader}>
-                <Text style={[styles.savedCitiesTitle, { color: t.text }]}>Saved Cities</Text>
-                <TouchableOpacity onPress={() => setDashboardVisible(true)} style={[styles.dashboardBtn, { backgroundColor: t.searchBg }, t.shadow]}>
-                    <Ionicons name="stats-chart-outline" size={16} color={t.text} />
-                    <Text style={[styles.dashboardBtnText, { color: t.text }]}>Compare</Text>
-                </TouchableOpacity>
-            </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.savedCitiesScroll}>
               {savedCities.map(city => (
-                <TouchableOpacity key={city.name} style={[styles.savedCityPill, { backgroundColor: t.pillBg }, t.shadow]} onPress={() => fetchWeatherBase(city.latitude, city.longitude, city.name)}>
-                  <Ionicons name="star" size={14} color="#f59e0b" />
+                <TouchableOpacity 
+                  key={city.name} 
+                  style={[styles.savedCityPill, { backgroundColor: t.pillBg }, t.shadow]} 
+                  onPress={() => {
+                    triggerSelection();
+                    setPreviewHourIndex(null);
+                    fetchWeatherBase(city.latitude, city.longitude, city.name);
+                  }}
+                >
+                  <Ionicons name="star" size={12} color="#f59e0b" />
                   <Text style={[styles.savedCityPillText, { color: t.text }]}>{city.name}</Text>
                 </TouchableOpacity>
               ))}
@@ -257,16 +318,24 @@ export default function WeatherScreen() {
         )}
 
         <View style={styles.content}>
-          {loading && !refreshing && searchResults.length === 0 ? (
-            <>
-              <ActivityIndicator size="large" color={t.text} style={{ marginBottom: 20 }} />
-              <Text style={[styles.subtitle, { color: t.subtext }]}>Fetching Weather...</Text>
-            </>
-          ) : errorMsg ? (
-            <>
-              <Ionicons name="warning-outline" size={64} color={t.text} />
-              <Text style={styles.errorText}>{errorMsg}</Text>
-            </>
+          {loading && !weather && searchResults.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#38bdf8" style={{ marginBottom: 16 }} />
+              <Text style={[styles.subtitle, { color: t.text }]}>Fetching Weather Data...</Text>
+              <Text style={[styles.subHint, { color: t.subtext }]}>Acquiring real-time atmospheric measurements</Text>
+            </View>
+          ) : errorMsg && !weather ? (
+            <View style={styles.errorContainer}>
+              <Ionicons name="location-outline" size={60} color="#f59e0b" style={{ marginBottom: 12 }} />
+              <Text style={[styles.errorText, { color: t.text }]}>{errorMsg}</Text>
+              <TouchableOpacity 
+                style={[styles.retryBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}
+                onPress={fetchCurrentLocation}
+              >
+                <Ionicons name="refresh" size={18} color={t.text} />
+                <Text style={[styles.retryBtnText, { color: t.text }]}>Retry Location</Text>
+              </TouchableOpacity>
+            </View>
           ) : weather ? (
             <Animated.ScrollView 
               contentContainerStyle={styles.scrollContent} 
@@ -274,107 +343,80 @@ export default function WeatherScreen() {
               showsVerticalScrollIndicator={false}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={t.text} />}
             >
+              {/* Main Weather Hero Container */}
               <View style={styles.currentWeatherContainer}>
+                
+                {/* Location & Save Bookmark */}
                 <View style={styles.addressRow}>
-                  <Text style={[styles.addressText, { color: t.text }]}>{address}</Text>
+                  <Text style={[styles.addressText, { color: t.text }]} numberOfLines={1}>{address}</Text>
                   {coordinates && (
                     <TouchableOpacity onPress={handleToggleSave} style={styles.saveButton}>
-                      <Ionicons name={isSaved ? "heart" : "heart-outline"} size={28} color={isSaved ? "#ef4444" : t.text} />
+                      <Ionicons name={isSaved ? "heart" : "heart-outline"} size={26} color={isSaved ? "#ef4444" : t.text} />
                     </TouchableOpacity>
                   )}
                 </View>
+
+                {/* Cached Offline Banner */}
+                {isCached && (
+                  <View style={[styles.cacheBadge, { backgroundColor: t.pillBg }]}>
+                    <Ionicons name="cloud-offline-outline" size={14} color="#f59e0b" />
+                    <Text style={[styles.cacheBadgeText, { color: t.subtext }]}>Offline Cache • Live update syncing...</Text>
+                  </View>
+                )}
+
+                {/* Time Travel Preview Notice */}
+                {isPreviewing && (
+                  <View style={[styles.previewNotice, { backgroundColor: '#38bdf820', borderColor: '#38bdf8' }]}>
+                    <Ionicons name="time" size={14} color="#38bdf8" />
+                    <Text style={styles.previewNoticeText}>
+                      Previewing {new Date(weather.hourly.time[previewHourIndex!]).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                    </Text>
+                  </View>
+                )}
+
                 <WeatherIcon 
-                  code={weather.weatherCode} 
-                  isDay={weather.isDay} 
-                  size={140} 
+                  code={currentCode} 
+                  isDay={currentIsDay} 
+                  size={135} 
                   style={styles.icon}
                 />
-                <Text style={[styles.tempText, { color: t.text }]}>{displayTemp(weather.temperature)}°{isFahrenheit ? 'F' : 'C'}</Text>
-                <Text style={[styles.feelsLikeText, { color: t.subtext }]}>Feels like {displayTemp(weather.feelsLike)}°</Text>
 
+                <Text style={[styles.tempText, { color: t.text }]}>{displayTemp(currentTemp)}°{isFahrenheit ? 'F' : 'C'}</Text>
+                <Text style={[styles.feelsLikeText, { color: t.subtext }]}>Feels like {displayTemp(currentFeelsLike)}°</Text>
+
+                {/* Primary Dual Spec Cards */}
                 <View style={styles.detailsContainer}>
                   <View style={[styles.detailCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}>
-                    <Ionicons name="water" size={28} color="#38bdf8" />
-                    <Text style={[styles.detailText, { color: t.text }]}>{weather.humidity}%</Text>
+                    <Ionicons name="water" size={24} color="#38bdf8" />
+                    <Text style={[styles.detailText, { color: t.text }]}>{currentHumidity}%</Text>
                     <Text style={[styles.detailLabel, { color: t.subtext }]}>Humidity</Text>
                   </View>
                   <View style={[styles.detailCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}>
-                    <MaterialCommunityIcons name="weather-windy" size={28} color="#94a3b8" />
-                    <Text style={[styles.detailText, { color: t.text }]}>{displaySpeed(weather.windSpeed)} {isMph ? 'mph' : 'km/h'}</Text>
-                    <Text style={[styles.detailLabel, { color: t.subtext }]}>Wind</Text>
+                    <MaterialCommunityIcons name="weather-windy" size={24} color="#94a3b8" />
+                    <Text style={[styles.detailText, { color: t.text }]}>{displaySpeed(currentWind)} {isMph ? 'mph' : 'km/h'}</Text>
+                    <Text style={[styles.detailLabel, { color: t.subtext }]}>Wind Speed</Text>
                   </View>
                 </View>
 
+                {/* Contextual Weather Insight Narrative */}
                 <WeatherNarrative weather={weather} theme={t} />
 
               </View>
 
-              {coordinates && (
-                <View style={styles.radarContainer}>
-                  <Text style={[styles.forecastTitle, { color: t.text, marginLeft: 15, marginBottom: 15 }]}>Weather Radar</Text>
-                  <TouchableOpacity 
-                    onPress={() => setMapVisible(true)} 
-                    style={[styles.radarButton, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}
-                  >
-                    <View style={styles.radarInfo}>
-                      <View style={styles.radarIconContainer}>
-                         <Ionicons name="map-outline" size={24} color="#4A90E2" />
-                      </View>
-                      <View style={{ marginLeft: 12 }}>
-                        <Text style={[styles.radarTitle, { color: t.text }]}>Precipitation Radar</Text>
-                        <Text style={[styles.radarSubtitle, { color: t.subtext }]}>View live weather map</Text>
-                      </View>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={t.subtext} />
-                  </TouchableOpacity>
-                </View>
-              )}
+              {/* 1. Interactive 24-Hour Time-Travel Scrubber */}
+              <TimeTravelSlider 
+                weather={weather} 
+                theme={t} 
+                selectedIndex={previewHourIndex} 
+                onSelectHour={setPreviewHourIndex}
+                isFahrenheit={isFahrenheit}
+                is24Hour={is24Hour}
+              />
 
-              <View style={styles.extendedDetailsContainer}>
-                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }, t.shadow]}>
-                   <Text style={[styles.miniTitle, { color: t.subtext }]}>AQI (US)</Text>
-                   <Text style={[styles.miniValue, { color: t.text }, weather.aqi > 100 && { color: '#ef4444' }]}>
-                     {weather.aqi > -1 ? weather.aqi : '--'}
-                   </Text>
-                 </View>
-                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }, t.shadow]}>
-                   <Text style={[styles.miniTitle, { color: t.subtext }]}>UV Index</Text>
-                   <Text style={[styles.miniValue, { color: t.text }, weather.daily.uvIndexMax[0] > 7 && { color: '#f59e0b' }]}>
-                     {weather.daily.uvIndexMax[0]}
-                   </Text>
-                 </View>
-                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }, t.shadow]}>
-                   <Text style={[styles.miniTitle, { color: t.subtext }]}>Sunrise</Text>
-                   <Text style={[styles.miniValue, { color: t.text, fontSize: 16 }]}>{displayTime(weather.daily.sunrise[0])}</Text>
-                 </View>
-                 <View style={[styles.miniCard, { backgroundColor: t.cardBg }, t.shadow]}>
-                   <Text style={[styles.miniTitle, { color: t.subtext }]}>Sunset</Text>
-                   <Text style={[styles.miniValue, { color: t.text, fontSize: 16 }]}>{displayTime(weather.daily.sunset[0])}</Text>
-                 </View>
-              </View>
-
-              {next24Hours.length > 0 && (
-                <View style={styles.forecastContainer}>
-                  <Text style={[styles.forecastTitle, { color: t.text }]}>Hourly Forecast</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.forecastScroll}>
-                    {next24Hours.map((time, idx) => {
-                      const absoluteIdx = hourlyStartIndex + idx;
-                      const isNow = idx === 0;
-                      return (
-                        <View key={time} style={[styles.forecastCard, { backgroundColor: t.cardBg, borderColor: getForecastBorderColor(weather.hourly.weatherCode[absoluteIdx], new Date(time).getHours() >= 6 && new Date(time).getHours() < 19 ? 1 : 0), borderWidth: 1.5 }, isNow && { borderColor: t.text, borderWidth: 2.5 }, t.shadow]}>
-                          <Text style={[styles.forecastDay, { color: t.text }]}>{isNow ? 'Now' : getHourFormat(time)}</Text>
-                          <WeatherIcon code={weather.hourly.weatherCode[absoluteIdx]} isDay={new Date(time).getHours() >= 6 && new Date(time).getHours() < 19 ? 1 : 0} size={32} style={{ marginVertical: 8 }} />
-                          <Text style={[styles.forecastTemp, { color: t.text }]}>{displayTemp(weather.hourly.temperature[absoluteIdx])}°</Text>
-                        </View>
-                      );
-                    })}
-                  </ScrollView>
-                </View>
-              )}
-
+              {/* 2. 7-Day Forecast */}
               {weather.daily && (
                 <View style={styles.forecastContainer}>
-                  <Text style={[styles.forecastTitle, { color: t.text }]}>7-Day Forecast</Text>
+                  <Text style={[styles.forecastTitle, { color: t.text }]}>7-Day Outlook</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.forecastScroll}>
                     {weather.daily.time.map((time, idx) => {
                       const date = new Date(time);
@@ -382,7 +424,7 @@ export default function WeatherScreen() {
                       return (
                         <View key={time} style={[styles.forecastCard, { backgroundColor: t.cardBg, borderColor: getForecastBorderColor(weather.daily.weatherCode[idx], 1), borderWidth: 1.5 }, t.shadow]}>
                           <Text style={[styles.forecastDay, { color: t.text }]}>{isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}</Text>
-                          <WeatherIcon code={weather.daily.weatherCode[idx]} isDay={1} size={36} style={{ marginVertical: 8 }} />
+                          <WeatherIcon code={weather.daily.weatherCode[idx]} isDay={1} size={32} style={{ marginVertical: 8 }} />
                           <Text style={[styles.forecastTemp, { color: t.text }]}>{displayTemp(weather.daily.temperatureMax[idx])}°</Text>
                           <Text style={[styles.forecastTempMin, { color: t.subtext }]}>{displayTemp(weather.daily.temperatureMin[idx])}°</Text>
                         </View>
@@ -391,26 +433,59 @@ export default function WeatherScreen() {
                   </ScrollView>
                 </View>
               )}
+
+              {/* 3. Smart Lifestyle & Activity Advisories */}
+              <LifestyleAdvisories weather={weather} theme={t} isFahrenheit={isFahrenheit} />
+
+              {/* 4. Dynamic Celestial Arc (Sun & Moon Tracker) */}
+              <CelestialArc weather={weather} theme={t} is24Hour={is24Hour} />
+
+              {/* 5. Health, Allergy & Pollen Hub */}
+              <HealthMetrics weather={weather} theme={t} />
+
+              {/* 6. Live Weather Radar Launcher */}
+              {coordinates && (
+                <View style={styles.radarContainer}>
+                  <Text style={[styles.forecastTitle, { color: t.text, marginBottom: 12 }]}>Live Precipitation Radar</Text>
+                  <TouchableOpacity 
+                    onPress={() => { triggerImpactMedium(); setMapVisible(true); }} 
+                    style={[styles.radarButton, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}
+                  >
+                    <View style={styles.radarInfo}>
+                      <View style={styles.radarIconContainer}>
+                         <Ionicons name="map" size={24} color="#38bdf8" />
+                      </View>
+                      <View style={{ marginLeft: 14 }}>
+                        <Text style={[styles.radarTitle, { color: t.text }]}>Interactive Weather Map</Text>
+                        <Text style={[styles.radarSubtitle, { color: t.subtext }]}>Radar nowcasting & storm spotter</Text>
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={t.subtext} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
             </Animated.ScrollView>
           ) : null}
         </View>
 
-        <Modal visible={settingsVisible} animationType="fade" transparent={true}>
+        {/* Settings Modal */}
+        <Modal visible={settingsVisible} animationType="fade" transparent={true} onRequestClose={() => setSettingsVisible(false)}>
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { backgroundColor: t.modalBg }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: t.text }]}>Settings & Preferences</Text>
                 <TouchableOpacity onPress={() => setSettingsVisible(false)}>
-                  <Ionicons name="close" size={28} color={t.text} />
+                  <Ionicons name="close" size={26} color={t.text} />
                 </TouchableOpacity>
               </View>
               
               <View style={[styles.settingRow, { borderBottomColor: t.modalBorder }]}>
                 <View>
                   <Text style={[styles.settingText, { color: t.text }]}>App Theme</Text>
-                  <Text style={[styles.settingSubtext, { color: t.subtext }]}>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</Text>
+                  <Text style={[styles.settingSubtext, { color: t.subtext }]}>{isDarkMode ? 'Dark Glass' : 'Light Sky'}</Text>
                 </View>
-                <Switch value={isDarkMode} onValueChange={setIsDarkMode} trackColor={{ true: '#4A90E2', false: '#cbd5e1' }} />
+                <Switch value={isDarkMode} onValueChange={(val) => { triggerSelection(); setIsDarkMode(val); }} trackColor={{ true: '#38bdf8', false: '#cbd5e1' }} />
               </View>
 
               <View style={[styles.settingRow, { borderBottomColor: t.modalBorder }]}>
@@ -418,7 +493,7 @@ export default function WeatherScreen() {
                   <Text style={[styles.settingText, { color: t.text }]}>Time Format</Text>
                   <Text style={[styles.settingSubtext, { color: t.subtext }]}>{is24Hour ? '24-Hour (14:00)' : '12-Hour (2:00 PM)'}</Text>
                 </View>
-                <Switch value={is24Hour} onValueChange={setIs24Hour} trackColor={{ true: '#4A90E2', false: '#cbd5e1' }} />
+                <Switch value={is24Hour} onValueChange={(val) => { triggerSelection(); setIs24Hour(val); }} trackColor={{ true: '#38bdf8', false: '#cbd5e1' }} />
               </View>
 
               <View style={[styles.settingRow, { borderBottomColor: t.modalBorder }]}>
@@ -426,7 +501,7 @@ export default function WeatherScreen() {
                   <Text style={[styles.settingText, { color: t.text }]}>Temperature Unit</Text>
                   <Text style={[styles.settingSubtext, { color: t.subtext }]}>{isFahrenheit ? 'Fahrenheit (°F)' : 'Celsius (°C)'}</Text>
                 </View>
-                <Switch value={isFahrenheit} onValueChange={setIsFahrenheit} trackColor={{ true: '#4A90E2', false: '#cbd5e1' }} />
+                <Switch value={isFahrenheit} onValueChange={(val) => { triggerSelection(); setIsFahrenheit(val); }} trackColor={{ true: '#38bdf8', false: '#cbd5e1' }} />
               </View>
 
               <View style={[styles.settingRow, { borderBottomWidth: 0 }]}>
@@ -434,29 +509,51 @@ export default function WeatherScreen() {
                   <Text style={[styles.settingText, { color: t.text }]}>Wind Speed Unit</Text>
                   <Text style={[styles.settingSubtext, { color: t.subtext }]}>{isMph ? 'Miles / hr' : 'Kilometers / hr'}</Text>
                 </View>
-                <Switch value={isMph} onValueChange={setIsMph} trackColor={{ true: '#4A90E2', false: '#cbd5e1' }} />
+                <Switch value={isMph} onValueChange={(val) => { triggerSelection(); setIsMph(val); }} trackColor={{ true: '#38bdf8', false: '#cbd5e1' }} />
               </View>
             </View>
           </View>
         </Modal>
 
-      <MultiCityDashboard 
+        {/* Multi-City Compare Modal */}
+        <MultiCityDashboard 
           visible={dashboardVisible} 
           onClose={() => setDashboardVisible(false)} 
           fetchData={fetchSavedCitiesWeather}
-          onSelectCity={fetchWeatherBase}
-          theme={t}
-      />
-
-      {coordinates && (
-        <WeatherMap 
-          visible={mapVisible} 
-          onClose={() => setMapVisible(false)} 
-          initialLocation={{ lat: coordinates.lat, lon: coordinates.lon, name: address }}
-          savedCities={savedCities}
+          onSelectCity={(lat, lon, name) => {
+            setPreviewHourIndex(null);
+            fetchWeatherBase(lat, lon, name);
+          }}
           theme={t}
         />
-      )}
+
+        {/* Live Weather Radar Modal */}
+        {coordinates && (
+          <WeatherMap
+            visible={mapVisible}
+            onClose={() => setMapVisible(false)}
+            initialLocation={{
+              lat: coordinates.lat,
+              lon: coordinates.lon,
+              name: address
+            }}
+            savedCities={savedCities}
+            theme={t}
+          />
+        )}
+
+        {/* Graphic Weather Share Card */}
+        {weather && (
+          <WeatherShareCard
+            visible={shareCardVisible}
+            onClose={() => setShareCardVisible(false)}
+            address={address}
+            weather={weather}
+            cityImage={cityImage}
+            theme={t}
+            isFahrenheit={isFahrenheit}
+          />
+        )}
 
       </KeyboardAvoidingView>
     </View>
@@ -468,260 +565,303 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchContainer: {
-    paddingTop: 60,
-    paddingHorizontal: 5,
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingTop: Platform.OS === 'android' ? 44 : 52,
+    paddingBottom: 6,
+    gap: 8,
   },
   searchInput: {
     flex: 1,
-    borderRadius: 15,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    fontSize: 16,
-    marginRight: 15,
+    height: 42,
+    borderRadius: 21,
+    paddingHorizontal: 16,
+    fontSize: 14,
   },
   iconButton: {
-    borderRadius: 15,
-    padding: 12,
-  },
-  autocompleteContainer: {
-    marginHorizontal: 5,
-    marginTop: 0,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  autocompleteItem: {
-    padding: 15,
-    flexDirection: 'row',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  autocompleteName: {
-    fontSize: 16,
+  quickBarRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  comparePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 6,
+  },
+  comparePillText: {
+    fontSize: 12,
     fontWeight: '600',
+  },
+  autocompleteContainer: {
+    marginHorizontal: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginTop: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  autocompleteItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+  },
+  autocompleteName: {
+    fontSize: 15,
+    fontWeight: '700',
   },
   autocompleteRegion: {
     fontSize: 12,
     marginTop: 2,
   },
   savedCitiesWrapper: {
-    marginTop: 10,
+    marginTop: 2,
+    marginBottom: 6,
   },
   savedCitiesScroll: {
-    paddingHorizontal: 5,
-    gap: 10,
+    paddingHorizontal: 16,
+    gap: 8,
   },
   savedCityPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-  },
-  savedCityPillText: {
-    marginLeft: 5,
-    fontWeight: '500',
-  },
-  savedCitiesHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    marginBottom: 10,
-  },
-  savedCitiesTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    opacity: 0.6,
-  },
-  dashboardBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 12,
     gap: 6,
   },
-  dashboardBtnText: {
-    fontSize: 12,
+  savedCityPillText: {
+    fontSize: 13,
     fontWeight: '600',
   },
   content: {
     flex: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
   scrollContent: {
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingBottom: 40,
-    paddingHorizontal: 5,
+    paddingVertical: 10,
+    paddingBottom: 50,
+    paddingHorizontal: 16,
     width: '100%',
   },
   currentWeatherContainer: {
     alignItems: 'center',
     width: '100%',
-    marginBottom: 30,
+    marginBottom: 10,
   },
   addressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 4,
+    marginBottom: 4,
+    maxWidth: '90%',
   },
   addressText: {
-    fontSize: 36,
-    fontWeight: '600',
+    fontSize: 32,
+    fontWeight: '700',
     textAlign: 'center',
   },
   saveButton: {
-    marginLeft: 15,
+    marginLeft: 12,
+  },
+  cacheBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 6,
+    marginVertical: 4,
+  },
+  cacheBadgeText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  previewNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 6,
+    marginTop: 6,
+  },
+  previewNoticeText: {
+    color: '#38bdf8',
+    fontSize: 12,
+    fontWeight: '700',
   },
   icon: {
-    marginVertical: 10,
+    marginVertical: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
   },
   tempText: {
-    fontSize: 72,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontSize: 68,
+    fontWeight: '900',
+    marginBottom: 2,
   },
   feelsLikeText: {
-    fontSize: 18,
-    marginBottom: 20,
+    fontSize: 16,
+    marginBottom: 16,
     fontWeight: '500',
   },
   subtitle: {
     fontSize: 18,
-    marginTop: 10,
+    fontWeight: '700',
+  },
+  subHint: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 25,
+    paddingVertical: 40,
+    marginTop: 30,
   },
   errorText: {
-    color: '#ef4444',
-    fontSize: 18,
-    marginTop: 10,
+    fontSize: 16,
+    lineHeight: 24,
     textAlign: 'center',
+    marginBottom: 20,
+    opacity: 0.9,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    borderWidth: 1,
+    gap: 8,
+  },
+  retryBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   detailsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    gap: 10,
+    gap: 12,
+    marginBottom: 6,
   },
   detailCard: {
     alignItems: 'center',
-    padding: 15,
-    borderRadius: 15,
+    padding: 14,
+    borderRadius: 18,
     flex: 1,
     borderWidth: 1,
   },
   detailText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginVertical: 5,
+    fontSize: 18,
+    fontWeight: '800',
+    marginVertical: 4,
   },
   detailLabel: {
-    fontSize: 14,
-  },
-  adviceCard: {
-    width: '100%',
-    padding: 15,
-    borderRadius: 15,
-    marginTop: 10,
-    borderWidth: 1,
-  },
-  adviceHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  adviceTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  adviceText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  extendedDetailsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 20,
-    gap: 10,
-  },
-  miniCard: {
-    width: '47.5%',
-    borderRadius: 15,
-    padding: 15,
-    alignItems: 'center',
-    marginBottom: 0,
-  },
-  miniTitle: {
     fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 5,
-    textTransform: 'uppercase',
-  },
-  miniValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   forecastContainer: {
     width: '100%',
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 15,
   },
   forecastTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 15,
-    marginLeft: 15,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 10,
   },
   forecastScroll: {
-    paddingRight: 0,
+    gap: 10,
+    paddingVertical: 4,
   },
   forecastCard: {
+    width: 80,
     alignItems: 'center',
-    borderRadius: 15,
-    padding: 15,
-    marginRight: 10,
-    minWidth: 80,
-    borderWidth: 1,
+    paddingVertical: 12,
+    borderRadius: 18,
   },
   forecastDay: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '700',
   },
   forecastTemp: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '800',
   },
   forecastTempMin: {
-    fontSize: 14,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  radarContainer: {
+    width: '100%',
+    marginTop: 15,
+  },
+  radarButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  radarInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  radarIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radarTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  radarSubtitle: {
+    fontSize: 12,
     marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 25,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
     paddingBottom: 40,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 10,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -730,57 +870,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
   },
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
   settingText: {
-    fontSize: 18,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
   },
   settingSubtext: {
-    fontSize: 14,
-    marginTop: 4,
-  },
-  radarContainer: {
-    width: '100%',
-    paddingVertical: 10,
-    marginBottom: 20,
-  },
-  radarButton: {
-    width: '100%',
-    padding: 20,
-    borderRadius: 20,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: 0,
-  },
-  radarInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  radarIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: 'rgba(74, 144, 226, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radarTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  radarSubtitle: {
-    fontSize: 14,
-    opacity: 0.8,
+    fontSize: 13,
+    marginTop: 2,
   },
 });
