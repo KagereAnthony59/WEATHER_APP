@@ -8,9 +8,11 @@
     "scheme": "weatherapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kanda.weather"
     },
     "android": {
+      "package": "com.kanda.weather",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
