@@ -3,6 +3,7 @@ import * as Location from 'expo-location';
 import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { trackWeatherViewed, trackCitySaved } from '../utils/analytics';
 
 const SETTINGS_FILE = FileSystem.documentDirectory + 'weather_settings.json';
 const CACHE_KEY = '@weather_cache_v2';
@@ -174,10 +175,13 @@ export const useWeather = () => {
 
   const toggleSavedCity = async (placeName: string, lat: number, lon: number) => {
     let updated;
-    if (savedCities.some(c => c.name === placeName)) {
+    const isCurrentlySaved = savedCities.some(c => c.name === placeName);
+    if (isCurrentlySaved) {
       updated = savedCities.filter(c => c.name !== placeName);
+      trackCitySaved(placeName, 'remove');
     } else {
       updated = [...savedCities, { name: placeName, latitude: lat, longitude: lon }];
+      trackCitySaved(placeName, 'add');
     }
     setSavedCities(updated);
     try {
@@ -296,6 +300,9 @@ export const useWeather = () => {
       setCoordinates({lat: latitude, lon: longitude});
       setErrorMsg(null);
       setIsCached(false);
+
+      // Track telemetry
+      trackWeatherViewed(placeName, newWeatherData.temperature, newWeatherData.weatherCode, newWeatherData.aqi);
 
       const fetchedImg = await fetchCityImage(placeName, current.weather_code, current.is_day);
 

@@ -14,6 +14,7 @@ import { HealthMetrics } from '../components/HealthMetrics';
 import { TimeTravelSlider } from '../components/TimeTravelSlider';
 import { WeatherShareCard } from '../components/WeatherShareCard';
 import { triggerImpactLight, triggerImpactMedium, triggerSelection } from '../utils/haptics';
+import { trackCitySearch, trackRadarOpened, trackTimeTravel } from '../utils/analytics';
 
 export default function WeatherScreen() {
   const { 
@@ -178,6 +179,7 @@ export default function WeatherScreen() {
     setSearchQuery('');
     autocompleteSearch('');
     setPreviewHourIndex(null);
+    trackCitySearch(city.name, city.country, city.latitude, city.longitude);
     fetchWeatherBase(city.latitude, city.longitude, city.name);
   };
 
@@ -446,7 +448,11 @@ export default function WeatherScreen() {
                 <View style={styles.radarContainer}>
                   <Text style={[styles.forecastTitle, { color: t.text, marginBottom: 12 }]}>Live Precipitation Radar</Text>
                   <TouchableOpacity 
-                    onPress={() => { triggerImpactMedium(); setMapVisible(true); }} 
+                    onPress={() => { 
+                      triggerImpactMedium(); 
+                      trackRadarOpened();
+                      setMapVisible(true); 
+                    }} 
                     style={[styles.radarButton, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}
                   >
                     <View style={styles.radarInfo}>
