@@ -8,7 +8,6 @@ import { WeatherOverlay } from '../components/WeatherOverlay';
 import { WeatherNarrative } from '../components/WeatherNarrative';
 import { MultiCityDashboard } from '../components/MultiCityDashboard';
 import { WeatherMap } from '../components/WeatherMap';
-import { SoundscapePlayer } from '../components/SoundscapePlayer';
 import { LifestyleAdvisories } from '../components/LifestyleAdvisories';
 import { CelestialArc } from '../components/CelestialArc';
 import { HealthMetrics } from '../components/HealthMetrics';
@@ -282,17 +281,16 @@ export default function WeatherScreen() {
             </View>
           )}
 
-          {/* Quick Toolbar (Soundscape + Saved Cities compare) */}
-          <View style={styles.quickBarRow}>
-            <SoundscapePlayer weatherCode={currentCode} isDay={currentIsDay} theme={t} />
-
-            {savedCities.length > 0 && (
+          {/* Quick Toolbar (Saved Cities compare) */}
+          {savedCities.length > 0 && (
+            <View style={styles.quickBarRow}>
+              <View style={{ flex: 1 }} />
               <TouchableOpacity onPress={() => { triggerSelection(); setDashboardVisible(true); }} style={[styles.comparePill, { backgroundColor: t.cardBg, borderColor: t.borderColor }, t.shadow]}>
                 <Ionicons name="stats-chart-outline" size={14} color="#38bdf8" />
                 <Text style={[styles.comparePillText, { color: t.text }]}>Compare ({savedCities.length})</Text>
               </TouchableOpacity>
-            )}
-          </View>
+            </View>
+          )}
         </View>
 
         {/* Saved Cities Horizontal Quick Bar */}

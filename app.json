@@ -40,6 +40,13 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "26b30b48-615e-4acb-9d59-194ca2952cb0"
+      }
+    },
+    "owner": "kagereanthony"
   }
 }
