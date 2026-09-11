@@ -14,7 +14,7 @@ import { HealthMetrics } from '../components/HealthMetrics';
 import { TimeTravelSlider } from '../components/TimeTravelSlider';
 import { WeatherShareCard } from '../components/WeatherShareCard';
 import { triggerImpactLight, triggerImpactMedium, triggerSelection } from '../utils/haptics';
-import { trackCitySearch, trackRadarOpened, trackTimeTravel } from '../utils/analytics';
+import { trackCitySearch, trackRadarOpened, trackTimeTravel, trackAppOpened } from '../utils/analytics';
 
 export default function WeatherScreen() {
   const { 
@@ -60,6 +60,10 @@ export default function WeatherScreen() {
     await refreshWeather();
     setRefreshing(false);
   }, [refreshWeather]);
+
+  useEffect(() => {
+    trackAppOpened();
+  }, []);
 
   useEffect(() => {
     if (!loading) {

@@ -4,34 +4,31 @@ from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls
 
 def create_document():
     doc = Document()
 
     # Page Setup - Normal Margins (1 inch)
-    sections = doc.sections
-    for section in sections:
+    for section in doc.sections:
         section.top_margin = Inches(1)
         section.bottom_margin = Inches(1)
         section.left_margin = Inches(1)
         section.right_margin = Inches(1)
 
-    # Color Palette Constants
+    # Color Palette Constants (Professional Executive Theme)
     COLOR_PRIMARY = RGBColor(26, 54, 93)      # Deep Navy #1A365D
-    COLOR_SECONDARY = RGBColor(14, 116, 144)  # Ocean Blue #0E7490
+    COLOR_SECONDARY = RGBColor(14, 116, 144)  # Ocean Cyan #0E7490
     COLOR_ACCENT = RGBColor(217, 119, 6)      # Amber #D97706
     COLOR_DARK = RGBColor(30, 41, 59)         # Slate 800 #1E293B
     COLOR_MUTED = RGBColor(100, 116, 139)     # Slate 500 #64748B
     COLOR_BG_LIGHT = "F8FAFC"                 # Light Gray Shading
     COLOR_PRIMARY_HEX = "1A365D"
     COLOR_SECONDARY_HEX = "0E7490"
-    COLOR_ACCENT_HEX = "D97706"
     COLOR_BORDER_HEX = "CBD5E1"
 
-    # Set Base Styles
+    # Base Styling
     normal_style = doc.styles['Normal']
     normal_style.font.name = 'Calibri'
     normal_style.font.size = Pt(11)
@@ -39,7 +36,7 @@ def create_document():
     normal_style.paragraph_format.line_spacing = 1.15
     normal_style.paragraph_format.space_after = Pt(6)
 
-    # Helper Functions
+    # Styling Helpers
     def set_cell_shading(cell, color_hex):
         shading = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{color_hex}"/>')
         cell._tc.get_or_add_tcPr().append(shading)
@@ -72,11 +69,11 @@ def create_document():
 
     def add_heading_1(text):
         p = doc.add_paragraph()
-        p.paragraph_format.space_before = Pt(18)
+        p.paragraph_format.space_before = Pt(20)
         p.paragraph_format.space_after = Pt(6)
         p.paragraph_format.keep_with_next = True
         run = p.add_run(text)
-        run.font.size = Pt(18)
+        run.font.size = Pt(17)
         run.font.bold = True
         run.font.color.rgb = COLOR_PRIMARY
         return p
@@ -87,7 +84,7 @@ def create_document():
         p.paragraph_format.space_after = Pt(4)
         p.paragraph_format.keep_with_next = True
         run = p.add_run(text)
-        run.font.size = Pt(14)
+        run.font.size = Pt(13)
         run.font.bold = True
         run.font.color.rgb = COLOR_SECONDARY
         return p
@@ -98,326 +95,249 @@ def create_document():
         p.paragraph_format.space_after = Pt(2)
         p.paragraph_format.keep_with_next = True
         run = p.add_run(text)
-        run.font.size = Pt(12)
+        run.font.size = Pt(11)
         run.font.bold = True
-        run.font.color.rgb = COLOR_ACCENT
+        run.font.color.rgb = COLOR_DARK
         return p
 
     def add_bullet(text, bold_prefix=""):
         p = doc.add_paragraph(style='List Bullet')
-        p.paragraph_format.space_after = Pt(4)
-        p.paragraph_format.line_spacing = 1.15
+        p.paragraph_format.space_after = Pt(3)
         if bold_prefix:
             run_b = p.add_run(bold_prefix)
             run_b.font.bold = True
             run_b.font.color.rgb = COLOR_DARK
         run_t = p.add_run(text)
-        run_t.font.color.rgb = COLOR_DARK
         return p
 
-    def add_callout(text, title="NOTE:"):
-        table = doc.add_table(rows=1, cols=1)
-        table.alignment = WD_TABLE_ALIGNMENT.CENTER
-        cell = table.cell(0, 0)
-        set_cell_shading(cell, "EFF6FF")
-        set_cell_margins(cell, top=140, bottom=140, left=200, right=200)
-        
-        # Border
-        borders = parse_xml(f'<w:tcBorders {nsdecls("w")}><w:left w:val="single" w:sz="24" w:space="0" w:color="{COLOR_SECONDARY_HEX}"/><w:top w:val="none"/><w:right w:val="none"/><w:bottom w:val="none"/></w:tcBorders>')
-        cell._tc.get_or_add_tcPr().append(borders)
-        
+    def add_callout(text, title="NOTE"):
+        tbl = doc.add_table(rows=1, cols=1)
+        tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+        cell = tbl.cell(0, 0)
+        cell.width = Inches(6.5)
+        set_cell_shading(cell, COLOR_BG_LIGHT)
+        set_cell_margins(cell, 120, 120, 180, 180)
         p = cell.paragraphs[0]
         p.paragraph_format.space_after = Pt(0)
-        run_title = p.add_run(f"{title} ")
-        run_title.font.bold = True
-        run_title.font.color.rgb = COLOR_SECONDARY
-        run_text = p.add_run(text)
-        run_text.font.color.rgb = COLOR_DARK
-        doc.add_paragraph().paragraph_format.space_after = Pt(4)
+        run_t = p.add_run(f"[{title}] ")
+        run_t.font.bold = True
+        run_t.font.color.rgb = COLOR_PRIMARY
+        p.add_run(text)
+        doc.add_paragraph().paragraph_format.space_after = Pt(6)
 
-    # -------------------------------------------------------------
-    # 1. COVER PAGE / TITLE SECTION
-    # -------------------------------------------------------------
+    # =============================================================
+    # COVER / HEADER SECTION
+    # =============================================================
     add_title("K & A Weather Application")
-    add_subtitle("Comprehensive System Architecture, APIs, Protocols & Engineering Specification (v1.0)")
-    
-    # Metadata Block
-    meta_p = doc.add_paragraph()
-    meta_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    meta_p.paragraph_format.space_after = Pt(28)
-    r = meta_p.add_run("Author: ")
-    r.font.bold = True
-    meta_p.add_run("K & A Engineering Team  |  ")
-    r2 = meta_p.add_run("Version: ")
-    r2.font.bold = True
-    meta_p.add_run("1.0.0 Production  |  ")
-    r3 = meta_p.add_run("Date: ")
-    r3.font.bold = True
-    meta_p.add_run("September 2026\n")
-    r4 = meta_p.add_run("Target Ecosystem: ")
-    r4.font.bold = True
-    meta_p.add_run("Cross-Platform Mobile (iOS & Android via Expo / React Native) & Progressive Web (PWA)")
-    
-    doc.add_page_break()
+    add_subtitle("Comprehensive System Architecture, Telemetry, and Production Documentation (v1.0.0)")
 
-    # -------------------------------------------------------------
-    # 2. EXECUTIVE SUMMARY & PROBLEM STATEMENT
-    # -------------------------------------------------------------
-    add_heading_1("1. Executive Summary & Problem Statement")
-    
+    # Metadata Grid
+    meta_table = doc.add_table(rows=5, cols=2)
+    meta_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    meta_data = [
+        ("Application Name", "K & A Weather"),
+        ("Current Version", "1.0.0 (Production Release)"),
+        ("Target Platforms", "Android (Direct APK & Google Play AAB), iOS Ready"),
+        ("Technology Stack", "React Native 0.81, Expo SDK 54, React 19, TypeScript 5.9"),
+        ("Cloud Infrastructure", "Expo EAS, GitHub CI/CD, PostHog Cloud Analytics")
+    ]
+    for row_idx, (label, val) in enumerate(meta_data):
+        c1, c2 = meta_table.cell(row_idx, 0), meta_table.cell(row_idx, 1)
+        c1.width, c2.width = Inches(2.2), Inches(4.3)
+        set_cell_margins(c1, 60, 60, 100, 100)
+        set_cell_margins(c2, 60, 60, 100, 100)
+        set_cell_shading(c1, COLOR_BG_LIGHT)
+        r1 = c1.paragraphs[0].add_run(label)
+        r1.font.bold = True
+        r1.font.color.rgb = COLOR_PRIMARY
+        c2.paragraphs[0].add_run(val)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(16)
+
+    # =============================================================
+    # 1. EXECUTIVE SUMMARY & ARCHITECTURE
+    # =============================================================
+    add_heading_1("1. Executive Summary & Design Philosophy")
     p = doc.add_paragraph()
-    p.add_run("Weather is one of the most critical external variables influencing human health, safety, psychology, logistics, and daily productivity. However, conventional digital weather applications remain fundamentally flawed. They present users with raw, fragmented tabular numbers—such as atmospheric pressure in millibars, humidity percentages, or bare temperature figures—without translating these parameters into actionable, real-world context.")
-    
-    add_heading_2("1.1 The Core Problems Solved by K & A Weather")
-    add_bullet(" Most weather applications require users to perform mental gymnastics to figure out what a temperature actually feels like compared to recent days or how humidity affects human comfort. K & A Weather provides direct comparative narratives (e.g., '3°C cooler than yesterday at this time').", "Lack of Human Context: ")
-    add_bullet(" Individuals with asthma, cardiovascular conditions, migraines, or severe seasonal allergies are vulnerable to micro-climatic shifts. K & A Weather integrates full biometeorological tracking (US AQI, PM2.5, PM10, Ozone, NO2, and botanical pollen tracking for Grass, Birch, and Ragweed).", "Neglect of Environmental Health & Allergies: ")
-    add_bullet(" Static weather icons (sun/cloud) fail to show incoming precipitation bands. K & A Weather incorporates an interactive, multi-frame RainViewer radar map with spotter telemetry and future nowcasting.", "Static Visuals vs. Dynamic Radar: ")
-    add_bullet(" Weather apps are traditionally cold and utilitarian. K & A Weather embeds reactive multi-track ambient audio (gentle rain, thunderstorm, forest birds, nocturnal crickets, winter winds) synchronized with current conditions to create a calming, multi-sensory experience.", "Absence of Sensory Immersion: ")
-    add_bullet(" Outdoor enthusiasts, runners, cyclists, stargazers, and photographers lack domain-specific viability ratings. The app includes a multi-dimensional lifestyle advisory engine and a geometric Celestial Arc for solar/lunar golden-hour calculations.", "Missing Activity-Specific Advisories: ")
-
-    # -------------------------------------------------------------
-    # 3. HIGH-LEVEL SYSTEM ARCHITECTURE & TOPOLOGY
-    # -------------------------------------------------------------
-    add_heading_1("2. High-Level System Architecture")
-    
-    p = doc.add_paragraph()
-    p.add_run("The application is constructed upon a high-performance, event-driven, decoupled client-cloud architecture. The mobile client functions as a resilient edge computing node that orchestrates multiple specialized meteorological, geospatial, and multimedia APIs, normalizes telemetry into unified TypeScript interfaces, caches payloads for instant offline hydration, and renders high-framerate 60 FPS interfaces.")
-
-    add_callout(
-        "K & A Weather operates in a Direct-to-Edge Client Architecture. The React Native / Expo client directly invokes secure, public and token-authenticated cloud microservices via HTTPS/REST, eliminating the latency and hosting overhead of a monolithic backend server.",
-        "ARCHITECTURE HIGHLIGHT:"
+    p.add_run(
+        "K & A Weather is an advanced, cross-platform mobile meteorological and biometeorological intelligence suite. "
+        "Engineered using React Native and Expo SDK 54, the application prioritizes sub-50ms instant cold-start rendering, "
+        "hyperlocal atmospheric telemetry, live animated precipitation radar, and privacy-conscious real-time product analytics."
     )
 
-    add_heading_2("2.1 Architectural Tier Breakdown")
-    
-    # Table: Architectural Tiers
-    table = doc.add_table(rows=5, cols=3)
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    headers = ["Tier", "Core Technologies", "Responsibility & Function"]
-    for i, h in enumerate(headers):
-        cell = table.cell(0, i)
-        cell.paragraphs[0].add_run(h).font.bold = True
-        set_cell_shading(cell, COLOR_PRIMARY_HEX)
-        cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(255, 255, 255)
-        set_cell_margins(cell, 120, 120, 150, 150)
+    add_heading_2("Core Architectural Pillars")
+    add_bullet("Direct client-to-API integration with global Open-Meteo supercomputers eliminates recurring server hosting fees while providing real-time data across every latitude and longitude.", "1. Serverless Resilience: ")
+    add_bullet("Two-tier local caching mechanism ensures the user interface renders the most recent weather snapshot in under 50ms upon app launch, functioning smoothly even without an internet connection.", "2. Instant Cold-Start & Offline Capability: ")
+    add_bullet("Custom interactive UI components, dynamic gradient physics reflecting solar zenith and condition codes, celestial sun/moon positioning, and native haptic feedback.", "3. Premium Glassmorphic Design: ")
+    add_bullet("Integrated PostHog real-time telemetry tracks active sessions, user locations, and search popularity without capturing sensitive user credentials.", "4. Cloud Observability: ")
 
-    rows_data = [
-        ("Presentation Tier (Frontend)", "React Native 0.81.5, Expo SDK 54, React 19, TypeScript, Reanimated 4, Expo-Blur, LinearGradient", "Renders glassmorphic UI, fluid animations, time-travel scrubbing, interactive radar map, audio soundscapes, and responsive mobile/web viewports."),
-        ("State & Persistence Tier", "AsyncStorage, Expo FileSystem (Document Directory), React Hooks (useWeather)", "Manages cold-start cache hydration (@weather_cache_v2), persistent saved cities (weather_settings.json), in-memory reactive state, and offline resilience."),
-        ("Orchestration & Network Tier", "Axios HTTP Client, Expo-Location, Haptics Engine", "Executes parallel multi-threaded network requests, handles geocoding fallbacks, location permission handshakes, error handling, and tactile feedback."),
-        ("External Cloud Microservices", "Open-Meteo Forecast, Open-Meteo Air Quality, Open-Meteo Geocoding, RainViewer Radar CDN, OpenStreetMap Nominatim, Unsplash CDN, Mixkit Audio", "Provides real-time meteorological calculations, aerosol monitoring, radar tile streaming, high-resolution photographic backdrops, and ambient audio.")
+    # =============================================================
+    # 2. APPLICATION PLATFORMS & CLOUD INFRASTRUCTURE
+    # =============================================================
+    add_heading_1("2. Platforms & Cloud Infrastructure Ecosystem")
+    p = doc.add_paragraph()
+    p.add_run("The application utilizes modern cloud deployment, version control, and telemetry platforms:")
+
+    plat_table = doc.add_table(rows=5, cols=3)
+    plat_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    plat_headers = ["Platform / Tool", "Role & Purpose", "Configuration & Integration"]
+    for i, h in enumerate(plat_headers):
+        c = plat_table.cell(0, i)
+        set_cell_shading(c, COLOR_PRIMARY_HEX)
+        set_cell_margins(c, 80, 80, 100, 100)
+        r = c.paragraphs[0].add_run(h)
+        r.font.bold = True
+        r.font.color.rgb = RGBColor(255, 255, 255)
+
+    plat_rows = [
+        ("Expo EAS (Expo Application Services)", "Cloud build pipeline for native Android (.apk/.aab) and iOS binaries.", "Configured via eas.json (preview APK and production AAB profiles). Remote cloud keystore signing."),
+        ("GitHub & EAS Workflows", "Source code repository and automated CI/CD pipeline.", "Linked via .eas/workflows/create-production-builds.yml. Automatically triggers cloud builds on git push main."),
+        ("PostHog Analytics (EU Cloud)", "Product analytics, active user telemetry, city search tracking, and retention.", "Configured in utils/analytics.ts and app/_layout.tsx using posthog-react-native SDK."),
+        ("GitHub Releases", "Public distribution hub for downloadable APK artifacts.", "Provides permanent, direct-download APK links with built-in version tracking and download counters.")
     ]
-
-    for row_idx, data in enumerate(rows_data, start=1):
+    for row_idx, data in enumerate(plat_rows, start=1):
         shd = COLOR_BG_LIGHT if row_idx % 2 == 1 else "FFFFFF"
         for col_idx, text in enumerate(data):
-            cell = table.cell(row_idx, col_idx)
-            set_cell_shading(cell, shd)
-            set_cell_margins(cell, 100, 100, 120, 120)
-            cell.paragraphs[0].add_run(text)
+            c = plat_table.cell(row_idx, col_idx)
+            set_cell_shading(c, shd)
+            set_cell_margins(c, 70, 70, 90, 90)
+            c.paragraphs[0].add_run(text)
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(12)
+    doc.add_paragraph().paragraph_format.space_after = Pt(10)
 
-    # -------------------------------------------------------------
-    # 4. EXTERNAL APIS, PROTOCOLS & INTEGRATION MATRIX
-    # -------------------------------------------------------------
-    add_heading_1("3. External APIs, Data Protocols & Communications")
-    
+    # =============================================================
+    # 3. DATA PROVIDERS & API SPECIFICATIONS
+    # =============================================================
+    add_heading_1("3. External APIs & Data Integration Matrix")
     p = doc.add_paragraph()
-    p.add_run("K & A Weather aggregates data across seven distinct global data providers and content delivery networks. All communications strictly enforce Transport Layer Security (TLS 1.3 / HTTPS) with JSON or binary media encoding.")
+    p.add_run("The application aggregates data across specialized international data providers:")
 
-    add_heading_2("3.1 Master API Integration Matrix")
+    add_heading_2("1. Open-Meteo Weather Forecast API")
+    add_bullet("Endpoint: https://api.open-meteo.com/v1/forecast", "URL: ")
+    add_bullet("Data Provided: Current temperature, apparent temperature (feels like), relative humidity, surface pressure, precipitation probability, wind speed, wind direction, UV index, and WMO weather codes.", "Metrics: ")
+    add_bullet("Temporal Range: 24-hour historical yesterday max temperature, current conditions, 24-hour hourly simulation, and 7-day extended forecast.", "Forecast Window: ")
 
-    # Master API Table
-    table_api = doc.add_table(rows=8, cols=5)
-    table_api.alignment = WD_TABLE_ALIGNMENT.CENTER
-    api_headers = ["Service Name", "Provider / Host", "Protocol", "Auth / Rate Limit", "Key Payload Data"]
-    for i, h in enumerate(api_headers):
-        cell = table_api.cell(0, i)
-        cell.paragraphs[0].add_run(h).font.bold = True
-        set_cell_shading(cell, COLOR_SECONDARY_HEX)
-        cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(255, 255, 255)
-        set_cell_margins(cell, 100, 100, 100, 100)
+    add_heading_2("2. Open-Meteo Air Quality & Biometeorology API")
+    add_bullet("Endpoint: https://air-quality-api.open-meteo.com/v1/air-quality", "URL: ")
+    add_bullet("Data Provided: European Air Quality Index (AQI), PM2.5 (Fine Particulate Matter), PM10 (Coarse Particles), Nitrogen Dioxide (NO2), Surface Ozone (O3), Sulphur Dioxide (SO2), Carbon Monoxide (CO), and botanical pollen counts (Grass, Birch, Ragweed).", "Metrics: ")
 
-    api_matrix_data = [
-        ("Weather Forecast API", "api.open-meteo.com/v1/forecast", "HTTPS GET (REST)", "Free / Non-commercial (10k req/day)", "Temp, Feels-like, Humidity, Pressure, Wind, WMO Weather Code, 7-day daily, 24-hr hourly, Yesterday delta"),
-        ("Air Quality & Aerosol API", "air-quality-api.open-meteo.com/v1/air-quality", "HTTPS GET (REST)", "Free / Non-commercial", "US AQI, PM2.5, PM10, Ozone (O3), Nitrogen Dioxide (NO2), Grass Pollen, Birch Pollen, Ragweed Pollen"),
-        ("Primary Geocoding API", "geocoding-api.open-meteo.com/v1/search", "HTTPS GET (REST)", "Free / 10k req/day", "City autocompletion, Lat/Lon coordinates, Country, Administrative Division (State/Region)"),
-        ("Fallback Geocoding API", "nominatim.openstreetmap.org/search & reverse", "HTTPS GET (REST)", "User-Agent Header (1 req/sec)", "Reverse coordinates to place name, city fallback when primary geocoder is unavailable"),
-        ("RainViewer Radar Metadata", "api.rainviewer.com/public/weather-maps.json", "HTTPS GET (REST)", "Free / Unrestricted", "Past radar timestamps (2 hours), Nowcast radar timestamps (30 mins), Tile paths"),
-        ("RainViewer Radar Tiles", "tilecache.rainviewer.com{path}/256/{z}/{x}/{y}/2/1_1.png", "HTTPS GET (PNG Raster)", "CDN Cached", "256x256 Web Mercator precipitation radar overlay tiles for Google Maps / Apple Maps / Web"),
-        ("Unsplash Imagery API", "api.unsplash.com/search/photos", "HTTPS GET (REST)", "Client-ID Bearer Key (50 req/hr)", "High-resolution portrait skylines matching current city name and contextual weather conditions")
+    add_heading_2("3. Geocoding & Coordinate Resolution")
+    add_bullet("Primary Engine: Open-Meteo Geocoding API (https://geocoding-api.open-meteo.com/v1/search).", "Primary: ")
+    add_bullet("Fallback Engine: OpenStreetMap Nominatim (https://nominatim.openstreetmap.org/search) for comprehensive multi-lingual address lookup.", "Fallback: ")
+    add_bullet("Local Device Geolocation: Native GPS hardware querying via expo-location with automatic reverse-geocoding.", "Hardware GPS: ")
+
+    add_heading_2("4. RainViewer Live Radar API")
+    add_bullet("Endpoint: https://api.rainviewer.com/public/weather-maps.json", "URL: ")
+    add_bullet("Data Provided: Global satellite precipitation radar tile overlays, animated 10-frame past-to-nowcast radar loops rendered seamlessly on MapView.", "Function: ")
+
+    add_heading_2("5. Unsplash Dynamic City Backdrops")
+    add_bullet("Endpoint: https://api.unsplash.com/search/photos", "URL: ")
+    add_bullet("Function: Fetches high-resolution photographic backdrops matching the active searched city name and current weather condition code.", "Function: ")
+
+    # =============================================================
+    # 4. DATABASE VS. CLIENT PERSISTENCE ARCHITECTURE
+    # =============================================================
+    add_heading_1("4. Data Storage & Persistence Architecture")
+    p = doc.add_paragraph()
+    p.add_run(
+        "K & A Weather implements a lean, privacy-conscious 2-tier local client storage architecture. "
+        "The application does not maintain a server-side relational database, eliminating data privacy risks, user credential databases, and backend hosting overhead."
+    )
+
+    add_heading_2("Tier 1: Cold-Start Instant Cache (AsyncStorage)")
+    add_bullet("Storage Key: '@weather_cache_v2'", "Identifier: ")
+    add_bullet("Payload: Serialized JSON snapshot of the latest complete weather payload, geographic coordinates, reverse-geocoded place name, and background image URL.", "Stored Content: ")
+    add_bullet("Lifecycle: Read immediately upon app startup in <50ms to hydrate the screen before background network refresh. Updated upon every successful API call.", "Lifecycle: ")
+
+    add_heading_2("Tier 2: Persistent Document Store (Expo FileSystem)")
+    add_bullet("File Path: FileSystem.documentDirectory + 'weather_settings.json'", "File Path: ")
+    add_bullet("Payload: Structured JSON containing saved favorite multi-city lists (city name, latitude, longitude) and user preferences.", "Stored Content: ")
+    add_bullet("Resilience: Stored in the native document sandbox, ensuring user bookmarks survive app updates and OS cache sweeps.", "Persistence: ")
+
+    # =============================================================
+    # 5. USER INTERFACE & FEATURE BREAKDOWN
+    # =============================================================
+    add_heading_1("5. Component Specifications & Features")
+
+    comp_table = doc.add_table(rows=8, cols=2)
+    comp_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    c1, c2 = comp_table.cell(0, 0), comp_table.cell(0, 1)
+    c1.width, c2.width = Inches(2.2), Inches(4.3)
+    set_cell_shading(c1, COLOR_PRIMARY_HEX)
+    set_cell_shading(c2, COLOR_PRIMARY_HEX)
+    set_cell_margins(c1, 80, 80, 100, 100)
+    set_cell_margins(c2, 80, 80, 100, 100)
+    r1 = c1.paragraphs[0].add_run("Component / Module")
+    r1.font.bold = True
+    r1.font.color.rgb = RGBColor(255, 255, 255)
+    r2 = c2.paragraphs[0].add_run("Functionality & UI/UX Description")
+    r2.font.bold = True
+    r2.font.color.rgb = RGBColor(255, 255, 255)
+
+    comp_data = [
+        ("WeatherOverlay.tsx", "Procedural animated ambient particle effects rendering falling rain streaks, drifting snow flakes, and thunder flashes."),
+        ("WeatherNarrative.tsx", "AI-style natural language meteorologist summary giving dynamic advice based on current telemetry, humidity, and precipitation probability."),
+        ("TimeTravelSlider.tsx", "Interactive 24-hour horizontal scrubber allowing users to simulate upcoming temperature, precipitation, and day/night transitions in real time."),
+        ("CelestialArc.tsx", "Astronomical sun and moon arc tracking showing live solar zenith angles, sunrise, sunset, and calculated golden hour photo windows."),
+        ("HealthMetrics.tsx", "Biometeorology hub displaying European AQI status, UV index protection ratings, and botanical allergy alerts for Grass, Birch, and Ragweed."),
+        ("WeatherMap.tsx", "Full-screen interactive MapView with animated RainViewer radar satellite loops, storm spotter radar, and city markers."),
+        ("MultiCityDashboard.tsx", "Multi-city comparison modal allowing users to monitor weather across all bookmarked cities simultaneously.")
     ]
-
-    for row_idx, data in enumerate(api_matrix_data, start=1):
+    for row_idx, (cname, cdesc) in enumerate(comp_data, start=1):
         shd = COLOR_BG_LIGHT if row_idx % 2 == 1 else "FFFFFF"
-        for col_idx, text in enumerate(data):
-            cell = table_api.cell(row_idx, col_idx)
-            set_cell_shading(cell, shd)
-            set_cell_margins(cell, 80, 80, 100, 100)
-            cell.paragraphs[0].add_run(text)
+        cell_a, cell_b = comp_table.cell(row_idx, 0), comp_table.cell(row_idx, 1)
+        set_cell_shading(cell_a, shd)
+        set_cell_shading(cell_b, shd)
+        set_cell_margins(cell_a, 70, 70, 90, 90)
+        set_cell_margins(cell_b, 70, 70, 90, 90)
+        cell_a.paragraphs[0].add_run(cname).font.bold = True
+        cell_b.paragraphs[0].add_run(cdesc)
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(12)
+    doc.add_paragraph().paragraph_format.space_after = Pt(10)
 
-    add_heading_2("3.2 Detailed API Request & Response Mechanics")
-    
-    add_heading_3("A. Open-Meteo Weather Engine")
+    # =============================================================
+    # 6. TELEMETRY & OBSERVABILITY WITH POSTHOG
+    # =============================================================
+    add_heading_1("6. PostHog Telemetry & Product Analytics")
     p = doc.add_paragraph()
-    p.add_run("The primary weather query constructs a comprehensive multi-parameter request combining current telemetry, hourly forecasts, 7-day daily projections, and historical offsets (past_days=1) in a single round-trip HTTP request to minimize network latency on cellular networks.")
-    add_bullet("Endpoint: https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,weather_code,wind_speed_10m,precipitation,surface_pressure&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,precipitation_probability,wind_speed_10m,is_day&timezone=auto&past_days=1", "Request URL: ")
-    add_bullet("WMO Weather Interpretation Codes (0: Clear sky, 1-3: Partly cloudy, 45-48: Fog, 51-67: Rain, 71-77: Snow, 80-82: Showers, 95-99: Thunderstorms) mapped to custom vector iconography, animated backgrounds, and dynamic color palettes.", "WMO Code Handling: ")
+    p.add_run(
+        "To provide actionable product insights while respecting user privacy, PostHog mobile analytics is integrated via `utils/analytics.ts`. "
+        "The following event schema is captured:"
+    )
 
-    add_heading_3("B. Open-Meteo Air Quality & Botanical Pollen Engine")
+    add_bullet("Fired when a user selects a location from the search bar. Captures city name, country, and geographic coordinates for regional popularity analytics.", "1. 'city_searched': ")
+    add_bullet("Fired upon weather data hydration. Captures city name, temperature, WMO weather code, and air quality index to analyze climate distributions.", "2. 'weather_viewed': ")
+    add_bullet("Fired when a user favorites or removes a city bookmark, tracking user retention and location loyalty.", "3. 'city_saved_toggle': ")
+    add_bullet("Fired when a user launches the interactive RainViewer radar modal.", "4. 'radar_map_opened': ")
+    add_bullet("Fired when a user interacts with the hourly 24-hour simulation slider.", "5. 'time_travel_scrubbed': ")
+    add_bullet("Automatically tracks active sessions, device models (Samsung, Xiaomi, Pixel), Android OS versions, and user country.", "6. Automatic Telemetry: ")
+
+    # =============================================================
+    # 7. PRODUCTION DEPLOYMENT & CI/CD GUIDE
+    # =============================================================
+    add_heading_1("7. Deployment & CI/CD Pipeline")
     p = doc.add_paragraph()
-    p.add_run("The client executes an asynchronous parallel request (`Promise.all`) to fetch both the weather telemetry and air quality metrics concurrently. The air quality payload includes particulate matter concentrations and biological allergens.")
-    add_bullet("US AQI (0-50: Good, 51-100: Moderate, 101-150: Unhealthy for Sensitive Groups, 151-200: Unhealthy, 201-300: Very Unhealthy, 300+: Hazardous).", "AQI Scale: ")
-    add_bullet("PM2.5 and PM10 in μg/m³, Ozone (O3) and Nitrogen Dioxide (NO2) in μg/m³.", "Pollutants: ")
-    add_bullet("Grass, Birch, and Ragweed pollen indices extracted from the hourly index corresponding to the current hour of the day.", "Allergens: ")
+    p.add_run("The application is configured for continuous cloud deployment:")
 
-    add_heading_3("C. RainViewer Live Radar Tile Protocol")
+    add_heading_2("EAS Build Profiles (eas.json)")
+    add_bullet("Profile 'preview': Compiles standalone, installable Android .apk binaries for direct testing and distribution.", "1. Preview APK: ")
+    add_bullet("Profile 'production': Compiles Android App Bundles (.aab) signed with cloud keystores ready for Google Play Store submission.", "2. Production AAB: ")
+
+    add_heading_2("Automated GitHub CI/CD Workflow")
+    add_bullet("Trigger: Any commit pushed to the 'main' branch automatically triggers an EAS cloud workflow.", "CI Trigger: ")
+    add_bullet("Workflow File: .eas/workflows/create-production-builds.yml", "Config File: ")
+    add_bullet("Artifact Delivery: Builds are published to the Expo Dashboard and can be attached directly to GitHub Releases.", "Distribution: ")
+
+    # =============================================================
+    # 8. CONCLUSION & SIGN-OFF
+    # =============================================================
+    add_heading_1("8. Conclusion & Sign-Off")
     p = doc.add_paragraph()
-    p.add_run("The radar module queries the RainViewer master JSON index to retrieve past frames (10-minute intervals covering the past 2 hours) and nowcasting frames (predictive precipitation modeling for the next 30 minutes). The app drives an automatic animation loop that cycles through frame timestamps, dynamically replacing the tile layer overlay on the map.")
-
-    # -------------------------------------------------------------
-    # 5. FRONTEND ARCHITECTURE & DESIGN SYSTEM
-    # -------------------------------------------------------------
-    add_heading_1("4. Frontend Architecture & Design Engineering")
-
-    p = doc.add_paragraph()
-    p.add_run("The frontend is built on modern React Native design principles, adhering to the 'Rich Aesthetics & Fluid Motion' standard. It employs frosted glassmorphism (`BlurView`), dynamic gradients (`LinearGradient`), physical haptic feedback (`expo-haptics`), and an intuitive modular layout.")
-
-    add_heading_2("4.1 Component Breakdown & Responsibility Matrix")
-
-    # Table: Components
-    table_comp = doc.add_table(rows=11, cols=3)
-    table_comp.alignment = WD_TABLE_ALIGNMENT.CENTER
-    comp_headers = ["Component File", "Visual / Functional Module", "Detailed Description & Technical Role"]
-    for i, h in enumerate(comp_headers):
-        cell = table_comp.cell(0, i)
-        cell.paragraphs[0].add_run(h).font.bold = True
-        set_cell_shading(cell, COLOR_PRIMARY_HEX)
-        cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(255, 255, 255)
-        set_cell_margins(cell, 100, 100, 100, 100)
-
-    comp_matrix = [
-        ("app/index.tsx", "Main Dashboard & Screen Controller", "Root screen managing unit toggles (°C/°F, km/h / mph, 12h/24h), theme state (Dark/Light), pull-to-refresh, modal visibility, and time-travel preview state."),
-        ("hooks/useWeather.ts", "Central State & Data Orchestrator", "Custom React hook handling location permissions, reverse geocoding, API calls, error states, offline cache hydration, and saved city management."),
-        ("components/WeatherMap.tsx", "Interactive Live Radar & Spotter Map", "Fullscreen map utilizing react-native-maps with RainViewer radar tile overlays, frame timeline scrubber, playback speed controls, satellite/dark basemaps, and Spotter Mode (tap to get instant micro-weather anywhere on Earth)."),
-        ("components/SoundscapePlayer.tsx", "Ambient Audio & Soundscape Engine", "Integrated audio player powered by expo-av offering 5 ambient tracks (Rain, Thunderstorm, Sunny Nature, Night Crickets, Alpine Wind) with volume adjustment and weather-matching auto-presets."),
-        ("components/LifestyleAdvisories.tsx", "Biometeorological Advisory Engine", "Calculates activity viability scores (0-100%) for Running, Cycling, Stargazing, Car Washing, Laundry Drying, and Outdoor Dining, plus UV/Pollen warnings."),
-        ("components/CelestialArc.tsx", "Astronomical Sun & Moon Calculator", "Visualizes solar arc geometry across the sky, sunrise/sunset times, daylight remaining countdown, and Golden Hour photography windows."),
-        ("components/HealthMetrics.tsx", "Aerosol & Environmental Health Panel", "Detailed biometeorological cards displaying US AQI ratings, PM2.5, PM10, Ozone, NO2, Barometric pressure trends, and grass/birch/ragweed allergen gauges."),
-        ("components/TimeTravelSlider.tsx", "24-Hour Forecast Scrubber", "Interactive slider allowing users to scrub forward through the next 24 hours; dynamically updates the entire dashboard's temperature, weather code, and conditions in real time."),
-        ("components/WeatherNarrative.tsx", "Natural Language Weather Interpreter", "Generates human-readable weather descriptions and compares today's peak temperature with yesterday's actual high (e.g., '3°C cooler than yesterday')."),
-        ("components/WeatherShareCard.tsx", "Social Sharing Graphic Generator", "Renders a social-ready graphic card with sleek styling for exporting weather conditions directly to social media or messaging platforms.")
-    ]
-
-    for row_idx, data in enumerate(comp_matrix, start=1):
-        shd = COLOR_BG_LIGHT if row_idx % 2 == 1 else "FFFFFF"
-        for col_idx, text in enumerate(data):
-            cell = table_comp.cell(row_idx, col_idx)
-            set_cell_shading(cell, shd)
-            set_cell_margins(cell, 80, 80, 100, 100)
-            cell.paragraphs[0].add_run(text)
-
-    doc.add_paragraph().paragraph_format.space_after = Pt(12)
-
-    # -------------------------------------------------------------
-    # 6. DATABASE, STORAGE & DATA PERSISTENCE
-    # -------------------------------------------------------------
-    add_heading_1("5. Database, Storage & Offline Persistence Tier")
-
-    p = doc.add_paragraph()
-    p.add_run("Because K & A Weather is designed as a standalone, zero-maintenance client application, it eliminates the operational complexity of hosting a centralized SQL/NoSQL database server. Instead, it employs a sophisticated, multi-tiered local storage architecture on the user's device.")
-
-    add_heading_2("5.1 Storage Mechanisms Breakdown")
-
-    add_bullet("Key: '@weather_cache_v2'. Stores the complete JSON snapshot of the most recent weather payload, coordinates, reverse-geocoded place name, and Unsplash background image URL. Upon cold app launch, the hook hydrates state instantly from this cache in under 50ms before initiating network background refresh.", "1. AsyncStorage (High-Speed Cold-Start Cache): ")
-    add_bullet("File Path: FileSystem.documentDirectory + 'weather_settings.json'. Stores structured JSON data for saved multi-city lists (name, latitude, longitude), user customization flags, and favorite locations. This ensures data survives app updates and cache cleanings.", "2. Expo FileSystem (Document Store): ")
-    add_bullet("Managed by React's useState and useWeather hook lifecycle. Manages ephemeral search autocomplete results, active time-travel scrubbing indexes, live radar playback frame counters, and audio playback positions.", "3. In-Memory Reactive Cache: ")
-
-    # -------------------------------------------------------------
-    # 7. HOW FRONTEND TALKS TO BACKEND (COMMUNICATION PROTOCOLS)
-    # -------------------------------------------------------------
-    add_heading_1("6. Communication Flow & Network Topology")
-
-    p = doc.add_paragraph()
-    p.add_run("The diagram below outlines the exact sequence of events during a typical app launch and location discovery cycle:")
-
-    add_heading_2("6.1 Complete Lifecycle Data Flow Sequence")
-    add_bullet("Step 1 (Offline Hydration): App initializes -> Reads AsyncStorage('@weather_cache_v2') -> If cache exists, renders immediate UI with cached banner in <50ms.", "Phase 1: Startup ")
-    add_bullet("Step 2 (Location Triangulation): useWeather requests GPS permissions via Expo Location -> Acquires Balanced Accuracy coordinates (Latitude, Longitude) -> Falls back to getLastKnownPositionAsync if GPS satellite lock takes too long.", "Phase 2: Geolocation ")
-    add_bullet("Step 3 (Reverse Geocoding): Converts (Lat, Lon) to human-readable City/Region name via Expo Location. If device geocoding encounters network failure, it automatically queries the OpenStreetMap Nominatim reverse API.", "Phase 3: Geocoding Fallback ")
-    add_bullet("Step 4 (Parallel Telemetry Ingestion): Fires simultaneous HTTPS GET requests to Open-Meteo Forecast and Open-Meteo Air Quality APIs using Axios with configured 9000ms timeouts.", "Phase 4: Telemetry Fetch ")
-    add_bullet("Step 5 (Media & Imagery Enrichment): If EXPO_PUBLIC_UNSPLASH_ACCESS_KEY is present, fires background request to Unsplash API for city skyline imagery matching the current weather condition.", "Phase 5: Visual Enhancement ")
-    add_bullet("Step 6 (State Commit & Cache Flush): Normalizes raw API response into the TypeScript WeatherData model -> Updates React state -> Overwrites AsyncStorage cache -> Triggers smooth fade-in animation.", "Phase 6: UI Render & Cache ")
-
-    # -------------------------------------------------------------
-    # 8. DEPLOYMENT & PLATFORM HOSTING STRATEGY
-    # -------------------------------------------------------------
-    add_heading_1("7. Deployment, Hosting & Distribution Strategy")
-
-    p = doc.add_paragraph()
-    p.add_run("A critical consideration for the user is how to deploy and distribute this application across free hosting platforms and mobile distribution channels.")
-
-    add_heading_2("7.1 Deployment Platform Compatibility Matrix")
-
-    table_dep = doc.add_table(rows=4, cols=4)
-    table_dep.alignment = WD_TABLE_ALIGNMENT.CENTER
-    dep_headers = ["Platform", "Target Type", "Compatibility Status", "Deployment Workflow & Commands"]
-    for i, h in enumerate(dep_headers):
-        cell = table_dep.cell(0, i)
-        cell.paragraphs[0].add_run(h).font.bold = True
-        set_cell_shading(cell, COLOR_PRIMARY_HEX)
-        cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(255, 255, 255)
-        set_cell_margins(cell, 100, 100, 100, 100)
-
-    dep_matrix = [
-        ("Vercel / Netlify / Cloudflare Pages", "Web / PWA (Mobile Browser)", "100% Fully Supported (Free)", "Run 'npx expo export -p web'. Deploy generated 'dist' directory. Provides instant public URL; users can 'Add to Home Screen' as a PWA."),
-        ("Expo EAS Build (Cloud CI/CD)", "Android APK & iOS App", "100% Fully Supported (Free Tier)", "Run 'eas build -p android --profile preview' to generate a downloadable .apk file that installs directly on physical Android phones."),
-        ("GitHub Actions CI/CD", "Android Standalone APK", "100% Free & Unlimited", "Configure a GitHub Action workflow to run Gradle assembleRelease and publish the .apk to GitHub Releases for direct public download.")
-    ]
-
-    for row_idx, data in enumerate(dep_matrix, start=1):
-        shd = COLOR_BG_LIGHT if row_idx % 2 == 1 else "FFFFFF"
-        for col_idx, text in enumerate(data):
-            cell = table_dep.cell(row_idx, col_idx)
-            set_cell_shading(cell, shd)
-            set_cell_margins(cell, 80, 80, 100, 100)
-            cell.paragraphs[0].add_run(text)
-
-    doc.add_paragraph().paragraph_format.space_after = Pt(12)
-
-    # -------------------------------------------------------------
-    # 9. ENVIRONMENT VARIABLES & SECURITY
-    # -------------------------------------------------------------
-    add_heading_1("8. Environment Configuration & Security Best Practices")
-
-    p = doc.add_paragraph()
-    p.add_run("The application utilizes Expo's public environment variable convention (`EXPO_PUBLIC_*`). Below are the required and optional configuration keys:")
-
-    add_bullet("EXPO_PUBLIC_UNSPLASH_ACCESS_KEY: Optional Unsplash API Access Key used to fetch high-resolution background imagery matching cities and weather conditions. If omitted, the app gracefully degrades to sleek procedural gradient themes.", "Unsplash Key: ")
-    add_bullet("All core weather, air quality, geocoding, and radar APIs utilized (Open-Meteo, RainViewer, OpenStreetMap) require zero proprietary API keys, drastically minimizing secret leakage vulnerabilities and maintenance overhead.", "Zero-Key Resiliency: ")
-
-    # -------------------------------------------------------------
-    # 10. VERSION 2.0 ROADMAP
-    # -------------------------------------------------------------
-    add_heading_1("9. Version 2.0 Product Roadmap")
-
-    p = doc.add_paragraph()
-    p.add_run("While Version 1.0 delivers a complete, production-grade meteorological and biometeorological suite, the following high-impact features are planned for Version 2.0:")
-
-    add_bullet("Dynamic particle physics (rain droplets, snowflakes, fog layers) that drift across the screen responding to device tilt via accelerometer/gyroscope sensors (expo-sensors).", "1. Gyroscopic Accelerometer Weather Particles: ")
-    add_bullet("Integrated notification service alerting users 15 minutes before rainfall starts, or warning of rapid atmospheric pressure drops (barometric headache alert).", "2. Severe Weather & Hyperlocal Rain Push Notifications: ")
-    add_bullet("Glanceable interactive home screen widgets for Android and iOS lock screens.", "3. Home Screen & Lock Screen Widgets: ")
-    add_bullet("Community weather reporting allowing users to pin local weather events (e.g., sudden hail, visible rainbows) directly onto the shared WeatherMap.", "4. Crowdsourced Spotter Network: ")
-
-    # -------------------------------------------------------------
-    # 11. CONCLUSION & SIGN-OFF
-    # -------------------------------------------------------------
-    add_heading_1("10. Conclusion & Architectural Sign-Off")
-    p = doc.add_paragraph()
-    p.add_run("K & A Weather Version 1.0 represents a modern benchmark in mobile meteorology applications. By harmonizing accurate scientific telemetry (Open-Meteo), live animated precipitation radar (RainViewer), biometeorological health indices, astronomical golden-hour mechanics, dynamic ambient soundscapes, and offline cache resilience, the application delivers a complete, polished, and premium user experience ready for real-world deployment.")
+    p.add_run(
+        "K & A Weather Version 1.0.0 represents a modern benchmark in mobile meteorology and biometeorological intelligence. "
+        "By harmonizing scientific supercomputer forecasts, live satellite radar nowcasting, offline cache resilience, "
+        "automated GitHub CI/CD, and real-time cloud analytics, the application delivers a polished, reliable, and enterprise-grade mobile experience."
+    )
 
     output_path = r"d:\PROJECTS\WEATHER_APP\K_and_A_Weather_v1.0_System_Documentation.docx"
     doc.save(output_path)

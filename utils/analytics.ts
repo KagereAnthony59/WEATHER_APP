@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import PostHog from 'posthog-react-native';
 
 export const POSTHOG_API_KEY = 'phc_rnARUT4DVPNsEcoeHTsYFTdAbnd9SM9UPWiKHRpTbMis';
@@ -6,19 +7,32 @@ export const POSTHOG_HOST = 'https://eu.i.posthog.com';
 export const posthog = new PostHog(POSTHOG_API_KEY, {
   host: POSTHOG_HOST,
   captureAppLifecycleEvents: true,
+  flushAt: 1,
+  flushInterval: 0,
 });
 
 /**
- * Generic safe event tracker
+ * Generic safe event tracker with instant flush
  */
 export const trackEvent = (event: string, properties?: Record<string, any>) => {
   try {
     if (posthog) {
       posthog.capture(event, properties);
+      posthog.flush();
     }
   } catch (e) {
     console.warn('PostHog capture error:', e);
   }
+};
+
+/**
+ * Track app launch & session start
+ */
+export const trackAppOpened = () => {
+  trackEvent('app_opened', {
+    platform: Platform.OS,
+    timestamp: new Date().toISOString(),
+  });
 };
 
 /**
