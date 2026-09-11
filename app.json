@@ -7,6 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "weatherapp",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/26b30b48-615e-4acb-9d59-194ca2952cb0"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kanda.weather"
