@@ -33,4 +33,6 @@ jobs:
         run: npm ci
 
       - name: 🚀 Publish EAS Update Automatically
-        run: eas update --auto --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas update --branch main --message "${{ github.event.head_commit.message || 'Auto update from GitHub Actions' }}" --non-interactive
