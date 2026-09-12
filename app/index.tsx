@@ -191,6 +191,51 @@ export default function WeatherScreen() {
   const displayTemp = (c: number) => Math.round(isFahrenheit ? (c * 9/5) + 32 : c);
   const displaySpeed = (kmh: number) => Math.round(isMph ? kmh * 0.621371 : kmh);
 
+  // Dynamic Time & Condition Greeting
+  const getDynamicGreeting = (code: number, isDay: number) => {
+    const hour = new Date().getHours();
+    let greeting = 'Good day';
+    let icon: keyof typeof Ionicons.glyphMap = 'sunny-outline';
+    let iconColor = '#f59e0b';
+    let message = 'Clear skies ahead';
+
+    if (hour >= 5 && hour < 12) {
+      greeting = 'Good morning';
+      icon = 'partly-sunny-outline';
+      iconColor = '#fbbf24';
+      message = 'Have a wonderful start to your day!';
+    } else if (hour >= 12 && hour < 17) {
+      greeting = 'Good afternoon';
+      icon = 'sunny-outline';
+      iconColor = '#f59e0b';
+      message = 'Sunlit conditions & pleasant breezes.';
+    } else if (hour >= 17 && hour < 22) {
+      greeting = 'Good evening';
+      icon = 'cloudy-night-outline';
+      iconColor = '#f97316';
+      message = 'Winding down into the evening hours.';
+    } else {
+      greeting = 'Good night';
+      icon = 'moon-outline';
+      iconColor = '#a855f7';
+      message = 'Calm and peaceful nighttime skies.';
+    }
+
+    if (code >= 51 && code <= 67) {
+      message = 'Rain showers active — grab an umbrella!';
+    } else if (code >= 95) {
+      message = 'Thunderstorms detected nearby — stay safe indoors.';
+    } else if (code >= 71 && code <= 77) {
+      message = 'Chilly snowfall today — bundle up warm!';
+    } else if (code >= 1 && code <= 3) {
+      message = 'Partly cloudy with gentle breezes.';
+    } else if (code === 0 && isDay) {
+      message = 'Bright, clear sunny skies outside.';
+    }
+
+    return { greeting, icon, iconColor, message };
+  };
+
   // Dynamic Theme
   const t = isDarkMode ? {
     text: '#ffffff',
@@ -377,6 +422,21 @@ export default function WeatherScreen() {
                     </Text>
                   </View>
                 )}
+
+                {/* Dynamic Time & Condition Greeting Banner */}
+                {(() => {
+                  const greetingInfo = getDynamicGreeting(currentCode, currentIsDay);
+                  return (
+                    <View style={[styles.greetingBanner, { backgroundColor: t.pillBg, borderColor: t.borderColor }, t.shadow]}>
+                      <View style={styles.greetingHeaderRow}>
+                        <Ionicons name={greetingInfo.icon} size={15} color={greetingInfo.iconColor} />
+                        <Text style={[styles.greetingText, { color: t.text }]}>{greetingInfo.greeting}</Text>
+                        <View style={styles.livePulseDot} />
+                      </View>
+                      <Text style={[styles.greetingMessage, { color: t.subtext }]}>{greetingInfo.message}</Text>
+                    </View>
+                  );
+                })()}
 
                 <WeatherIcon 
                   code={currentCode} 
@@ -722,6 +782,38 @@ const styles = StyleSheet.create({
     color: '#38bdf8',
     fontSize: 12,
     fontWeight: '700',
+  },
+  greetingBanner: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    marginVertical: 6,
+    maxWidth: '90%',
+  },
+  greetingHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  greetingText: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  livePulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10b981',
+    marginLeft: 2,
+  },
+  greetingMessage: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 2,
+    textAlign: 'center',
   },
   icon: {
     marginVertical: 8,
