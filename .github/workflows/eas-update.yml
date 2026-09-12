@@ -26,7 +26,19 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm ci
 
+      - name: 🔍 Verify Expo Authentication
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::EXPO_TOKEN is empty or missing in GitHub Secrets!"
+            exit 1
+          fi
+          echo "Token found. Verifying login with EAS..."
+          npx --yes eas-cli whoami
+
       - name: 🚀 Publish EAS Update Automatically
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: npx --yes eas-cli update --branch main --message "${{ github.event.head_commit.message || 'Auto update from GitHub Actions' }}" --non-interactive
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: npx --yes eas-cli update --branch main --message "${COMMIT_MSG:-Auto OTA update from GitHub Actions}" --non-interactive
