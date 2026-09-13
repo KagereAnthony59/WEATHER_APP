@@ -42,4 +42,7 @@ jobs:
       - name: 🚀 Publish EAS Update Automatically
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
-        run: npx --yes eas-cli update --branch main --message "${COMMIT_MSG:-Auto OTA update from GitHub Actions}" --non-interactive
+        run: |
+          npx --yes eas-cli update --branch main --message "${COMMIT_MSG:-Auto OTA update from GitHub Actions}" --non-interactive
+          npx --yes eas-cli channel:edit preview --branch main --non-interactive || true
+          npx --yes eas-cli channel:edit production --branch main --non-interactive || true
