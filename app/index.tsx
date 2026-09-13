@@ -12,6 +12,7 @@ import { LifestyleAdvisories } from '../components/LifestyleAdvisories';
 import { CelestialArc } from '../components/CelestialArc';
 import { HealthMetrics } from '../components/HealthMetrics';
 import { TimeTravelSlider } from '../components/TimeTravelSlider';
+import { WeatherWisdom } from '../components/WeatherWisdom';
 import { WeatherShareCard } from '../components/WeatherShareCard';
 import { triggerImpactLight, triggerImpactMedium, triggerSelection } from '../utils/haptics';
 import { trackCitySearch, trackRadarOpened, trackTimeTravel, trackAppOpened } from '../utils/analytics';
@@ -476,6 +477,9 @@ export default function WeatherScreen() {
                 isFahrenheit={isFahrenheit}
                 is24Hour={is24Hour}
               />
+
+              {/* Weather Wisdom & Science Trivia */}
+              <WeatherWisdom theme={t} />
 
               {/* 2. 7-Day Forecast */}
               {weather.daily && (
