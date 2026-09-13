@@ -13,6 +13,7 @@ import { CelestialArc } from '../components/CelestialArc';
 import { HealthMetrics } from '../components/HealthMetrics';
 import { TimeTravelSlider } from '../components/TimeTravelSlider';
 import { WeatherWisdom } from '../components/WeatherWisdom';
+import { DrivingCommuteSafety } from '../components/DrivingCommuteSafety';
 import { WeatherShareCard } from '../components/WeatherShareCard';
 import { triggerImpactLight, triggerImpactMedium, triggerSelection } from '../utils/haptics';
 import { trackCitySearch, trackRadarOpened, trackTimeTravel, trackAppOpened } from '../utils/analytics';
@@ -505,10 +506,13 @@ export default function WeatherScreen() {
               {/* 3. Smart Lifestyle & Activity Advisories */}
               <LifestyleAdvisories weather={weather} theme={t} isFahrenheit={isFahrenheit} />
 
-              {/* 4. Dynamic Celestial Arc (Sun & Moon Tracker) */}
+              {/* 4. Commute & Driving Road Safety */}
+              <DrivingCommuteSafety weather={weather} theme={t} isMph={isMph} />
+
+              {/* 5. Dynamic Celestial Arc (Sun & Moon Tracker) */}
               <CelestialArc weather={weather} theme={t} is24Hour={is24Hour} />
 
-              {/* 5. Health, Allergy & Pollen Hub */}
+              {/* 6. Health, Allergy & Pollen Hub */}
               <HealthMetrics weather={weather} theme={t} />
 
               {/* 6. Live Weather Radar Launcher */}

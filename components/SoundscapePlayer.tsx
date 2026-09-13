@@ -153,25 +153,35 @@ export const SoundscapePlayer: React.FC<Props> = ({ weatherCode = 0, isDay = 1, 
 
   return (
     <>
-      <TouchableOpacity 
-        style={[styles.floatingPill, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }, theme.shadow]}
-        onPress={togglePlay}
-        onLongPress={() => {
-          triggerSelection();
-          setModalVisible(true);
-        }}
-      >
-        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-          <Ionicons 
-            name={isPlaying ? "volume-high" : "volume-mute-outline"} 
-            size={18} 
-            color={isPlaying ? "#38bdf8" : theme.subtext} 
-          />
-        </Animated.View>
-        <Text style={[styles.pillText, { color: isPlaying ? theme.text : theme.subtext }]}>
-          {isPlaying ? activeTrack.name.split(' ')[0] : 'Sound'}
-        </Text>
-      </TouchableOpacity>
+      <View style={[styles.floatingPill, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }, theme.shadow]}>
+        <TouchableOpacity 
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+          onPress={togglePlay}
+          activeOpacity={0.7}
+        >
+          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <Ionicons 
+              name={isPlaying ? "volume-high" : "volume-mute-outline"} 
+              size={16} 
+              color={isPlaying ? "#38bdf8" : theme.subtext} 
+            />
+          </Animated.View>
+          <Text style={[styles.pillText, { color: isPlaying ? theme.text : theme.subtext }]}>
+            {isPlaying ? activeTrack.name.split(' ')[0] : 'Sound'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={{ paddingLeft: 6, borderLeftWidth: 1, borderLeftColor: theme.borderColor }}
+          onPress={() => {
+            triggerSelection();
+            setModalVisible(true);
+          }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="musical-notes-outline" size={14} color={isPlaying ? "#38bdf8" : theme.subtext} />
+        </TouchableOpacity>
+      </View>
 
       <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
