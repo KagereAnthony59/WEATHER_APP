@@ -1,14 +1,14 @@
 import { Platform } from 'react-native';
 import PostHog from 'posthog-react-native';
 
-export const POSTHOG_API_KEY = 'phc_rnARUT4DVPNsEcoeHTsYFTdAbnd9SM9UPWiKHRpTbMis';
+export const POSTHOG_API_KEY = 'phc_rnARUT4DVPNsEcoeHTsYFTdABnd9SM9UPWiKHRpTbMis';
 export const POSTHOG_HOST = 'https://eu.i.posthog.com';
 
 export const posthog = new PostHog(POSTHOG_API_KEY, {
   host: POSTHOG_HOST,
   captureAppLifecycleEvents: true,
   flushAt: 1,
-  flushInterval: 0,
+  flushInterval: 2000,
 });
 
 /**
