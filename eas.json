@@ -12,15 +12,27 @@
       "distribution": "internal",
       "channel": "preview",
       "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a"
+      }
+    },
+    "preview-universal": {
+      "distribution": "internal",
+      "channel": "preview",
+      "android": {
         "buildType": "apk"
       }
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "android": {
+        "buildType": "app-bundle"
+      }
     }
   },
   "submit": {
     "production": {}
   }
 }
+
