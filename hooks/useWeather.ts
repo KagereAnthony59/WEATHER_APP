@@ -93,27 +93,6 @@ const getFallbackBackdrop = (code?: number, isDay?: number): string => {
   return day ? DEFAULT_WEATHER_BACKDROPS.clear_day : DEFAULT_WEATHER_BACKDROPS.clear_night;
 };
 
-const UMU_IMAGES = [
-  require('../assets/umu_images/umu_1.jpg'),
-  require('../assets/umu_images/umu_2.jpg'),
-  require('../assets/umu_images/umu_3.jpg'),
-  require('../assets/umu_images/umu_4.jpg'),
-  require('../assets/umu_images/umu_5.jpg'),
-  require('../assets/umu_images/umu_6.jpg'),
-];
-
-let umuImageIndex = Math.floor(Math.random() * UMU_IMAGES.length);
-
-const isUMULocation = (name: string): boolean => {
-  if (!name) return false;
-  const lower = name.toLowerCase();
-  return (
-    lower.includes('martyr') ||
-    lower.includes('umu') ||
-    lower.includes('nkozi')
-  );
-};
-
 export const useWeather = () => {
   const [address, setAddress] = useState<string>('Detecting Location...');
   const [coordinates, setCoordinates] = useState<{lat: number, lon: number} | null>(null);
@@ -148,14 +127,6 @@ export const useWeather = () => {
   }, []);
 
   const fetchCityImage = async (cityName: string, weatherCode?: number, isDay?: number): Promise<any> => {
-    // Dedicated authentic pool for Uganda Martyrs University / UMU / Nkozi
-    if (isUMULocation(cityName)) {
-      const selectedImg = UMU_IMAGES[umuImageIndex % UMU_IMAGES.length];
-      umuImageIndex = (umuImageIndex + 1) % UMU_IMAGES.length;
-      setCityImage(selectedImg);
-      return selectedImg;
-    }
-
     const fallbackUrl = getFallbackBackdrop(weatherCode, isDay);
     try {
       const accessKey = process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY || 'O8cYL7g7vogChwbYekIEU7c-vjDyEBR0ZD9cZjoDQjo';
