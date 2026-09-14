@@ -71,6 +71,28 @@ export interface CitySearchResult {
   admin1?: string; // State/Region
 }
 
+const DEFAULT_WEATHER_BACKDROPS: Record<string, string> = {
+  clear_day: 'https://images.unsplash.com/photo-1601297183305-6df142704ea2?auto=format&fit=crop&w=1080&q=80',
+  clear_night: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1080&q=80',
+  cloudy_day: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=1080&q=80',
+  cloudy_night: 'https://images.unsplash.com/photo-1532978879524-7634f590ff91?auto=format&fit=crop&w=1080&q=80',
+  rain: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=1080&q=80',
+  snow: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?auto=format&fit=crop&w=1080&q=80',
+  thunder: 'https://images.unsplash.com/photo-1605727216801-e27ce1d0cc28?auto=format&fit=crop&w=1080&q=80',
+  fog: 'https://images.unsplash.com/photo-1487621167305-5d248087c724?auto=format&fit=crop&w=1080&q=80',
+};
+
+const getFallbackBackdrop = (code?: number, isDay?: number): string => {
+  const day = isDay !== 0;
+  if (code === undefined) return day ? DEFAULT_WEATHER_BACKDROPS.clear_day : DEFAULT_WEATHER_BACKDROPS.clear_night;
+  if (code >= 95) return DEFAULT_WEATHER_BACKDROPS.thunder;
+  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return DEFAULT_WEATHER_BACKDROPS.snow;
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return DEFAULT_WEATHER_BACKDROPS.rain;
+  if (code >= 45 && code <= 48) return DEFAULT_WEATHER_BACKDROPS.fog;
+  if (code >= 1 && code <= 3) return day ? DEFAULT_WEATHER_BACKDROPS.cloudy_day : DEFAULT_WEATHER_BACKDROPS.cloudy_night;
+  return day ? DEFAULT_WEATHER_BACKDROPS.clear_day : DEFAULT_WEATHER_BACKDROPS.clear_night;
+};
+
 export const useWeather = () => {
   const [address, setAddress] = useState<string>('Detecting Location...');
   const [coordinates, setCoordinates] = useState<{lat: number, lon: number} | null>(null);
@@ -80,7 +102,7 @@ export const useWeather = () => {
   const [isCached, setIsCached] = useState(false);
   const [savedCities, setSavedCities] = useState<SavedCity[]>([]);
   const [searchResults, setSearchResults] = useState<CitySearchResult[]>([]);
-  const [cityImage, setCityImage] = useState<string | null>(null);
+  const [cityImage, setCityImage] = useState<string | null>(DEFAULT_WEATHER_BACKDROPS.clear_day);
 
   // 1. Instant Startup: Hydrate from AsyncStorage cache
   useEffect(() => {
@@ -105,15 +127,12 @@ export const useWeather = () => {
   }, []);
 
   const fetchCityImage = async (cityName: string, weatherCode?: number, isDay?: number): Promise<string | null> => {
+    const fallbackUrl = getFallbackBackdrop(weatherCode, isDay);
     try {
-      const accessKey = process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY;
-      if (!accessKey) {
-        setCityImage(null);
-        return null;
-      }
+      const accessKey = process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY || 'O8cYL7g7vogChwbYekIEU7c-vjDyEBR0ZD9cZjoDQjo';
       
-      // Attempt 1: City photo
-      let res = await axios.get(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(cityName + ' skyline')}&orientation=portrait&per_page=1&client_id=${accessKey}`, { timeout: 4000 });
+      // Attempt 1: City skyline photo
+      let res = await axios.get(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(cityName + ' skyline')}&orientation=portrait&per_page=1&client_id=${accessKey}`, { timeout: 4500 });
       
       if (res.data && res.data.results && res.data.results.length > 0) {
         const url = res.data.results[0].urls.regular;
@@ -122,7 +141,7 @@ export const useWeather = () => {
       }
 
       // Attempt 2: Direct city name
-      res = await axios.get(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(cityName)}&orientation=portrait&per_page=1&client_id=${accessKey}`, { timeout: 4000 });
+      res = await axios.get(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(cityName)}&orientation=portrait&per_page=1&client_id=${accessKey}`, { timeout: 4500 });
       
       if (res.data && res.data.results && res.data.results.length > 0) {
         const url = res.data.results[0].urls.regular;
@@ -130,31 +149,13 @@ export const useWeather = () => {
         return url;
       }
 
-      // Attempt 3: Weather Condition background
-      let genericQuery = 'nature landscape sky';
-      if (weatherCode !== undefined && isDay !== undefined) {
-        const timeStr = isDay ? 'daytime' : 'night';
-        if (weatherCode <= 3) genericQuery = `clear sky blue ${timeStr} scenery`;
-        else if (weatherCode <= 48) genericQuery = `cloudy overcast sky ${timeStr}`;
-        else if (weatherCode <= 67 || (weatherCode >= 80 && weatherCode <= 82)) genericQuery = `rainy aesthetic atmosphere`;
-        else if (weatherCode <= 77 || (weatherCode >= 85 && weatherCode <= 86)) genericQuery = `winter snow scenic landscape`;
-        else if (weatherCode >= 95) genericQuery = `lightning storm dark clouds`;
-      }
-
-      res = await axios.get(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(genericQuery)}&orientation=portrait&per_page=1&client_id=${accessKey}`, { timeout: 4000 });
-      
-      if (res.data && res.data.results && res.data.results.length > 0) {
-        const url = res.data.results[0].urls.regular;
-        setCityImage(url);
-        return url;
-      }
-      
-      setCityImage(null);
-      return null;
+      // Fallback: Condition-based HD backdrop
+      setCityImage(fallbackUrl);
+      return fallbackUrl;
     } catch (e) {
-      console.warn('Unsplash fetch skipped or timed out');
-      setCityImage(null);
-      return null;
+      console.warn('Unsplash live fetch skipped or timed out, using curated backdrop');
+      setCityImage(fallbackUrl);
+      return fallbackUrl;
     }
   };
 
