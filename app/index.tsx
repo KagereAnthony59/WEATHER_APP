@@ -277,7 +277,10 @@ export default function WeatherScreen() {
     <View style={styles.container}>
       <StatusBar style={isDarkMode ? "light" : "dark"} />
       {cityImage && (
-        <ImageBackground source={{ uri: cityImage }} style={StyleSheet.absoluteFill} />
+        <ImageBackground
+          source={typeof cityImage === 'string' ? { uri: cityImage } : cityImage}
+          style={StyleSheet.absoluteFill}
+        />
       )}
       <LinearGradient colors={currentColors} style={[StyleSheet.absoluteFill, { opacity: cityImage ? (isDarkMode ? 0.75 : 0.6) : 1 }]} />
       

@@ -10,7 +10,7 @@ interface Props {
   onClose: () => void;
   address: string;
   weather: WeatherData;
-  cityImage: string | null;
+  cityImage: any;
   theme: any;
   isFahrenheit: boolean;
 }
@@ -73,7 +73,10 @@ export const WeatherShareCard: React.FC<Props> = ({
           {/* Graphic Preview Card */}
           <View style={styles.previewCard}>
             {cityImage && (
-              <ImageBackground source={{ uri: cityImage }} style={StyleSheet.absoluteFill} />
+              <ImageBackground
+                source={typeof cityImage === 'string' ? { uri: cityImage } : cityImage}
+                style={StyleSheet.absoluteFill}
+              />
             )}
             <LinearGradient
               colors={['rgba(15, 23, 42, 0.4)', 'rgba(15, 23, 42, 0.88)']}
