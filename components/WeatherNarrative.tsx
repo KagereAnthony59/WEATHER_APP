@@ -29,8 +29,8 @@ export const WeatherNarrative: React.FC<Props> = ({ weather, theme }) => {
 
     // 3. Precipitation Probability
     const maxRainProb = Math.max(...hourly.precipitationProbability.slice(0, 12));
-    if (maxRainProb > 50 && !narrative.includes("rain") && !narrative.includes("Showers")) {
-      narrative += `There's a high chance (${maxRainProb}%) of rain in the next few hours. `;
+    if (maxRainProb > 50 && !narrative.includes("rain") && !narrative.includes("Showers") && !narrative.includes("drizzle")) {
+      narrative += `There's a chance (${maxRainProb}%) of passing showers later today. `;
     }
 
     // 4. Extras (UV/AQI)

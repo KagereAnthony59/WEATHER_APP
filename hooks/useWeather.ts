@@ -82,6 +82,17 @@ const DEFAULT_WEATHER_BACKDROPS: Record<string, string> = {
   fog: 'https://images.unsplash.com/photo-1487621167305-5d248087c724?auto=format&fit=crop&w=1080&q=80',
 };
 
+export const refineWeatherCode = (code: number, precipitation: number = 0, cloudCover: number = 0, rain: number = 0): number => {
+  // If API reports drizzle/shower (codes 51, 53, 80) but actual precipitation is trace (< 0.2mm) and rain is 0:
+  if ((code === 51 || code === 53 || code === 80) && precipitation < 0.2 && rain === 0) {
+    if (cloudCover <= 25) return 0; // Clear
+    if (cloudCover <= 60) return 1; // Mainly clear / scattered clouds
+    if (cloudCover <= 85) return 2; // Partly cloudy
+    return 3; // Overcast
+  }
+  return code;
+};
+
 const getFallbackBackdrop = (code?: number, isDay?: number): string => {
   const day = isDay !== 0;
   if (code === undefined) return day ? DEFAULT_WEATHER_BACKDROPS.clear_day : DEFAULT_WEATHER_BACKDROPS.clear_night;
@@ -236,7 +247,7 @@ export const useWeather = () => {
       setLoading(true);
       
       const [weatherResponse, aqiResponse] = await Promise.all([
-        axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,weather_code,wind_speed_10m,precipitation,surface_pressure&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,precipitation_probability,wind_speed_10m,is_day&timezone=auto&past_days=1`, { timeout: 9000 }),
+        axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,weather_code,wind_speed_10m,precipitation,rain,showers,cloud_cover,surface_pressure&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,precipitation_probability,precipitation,rain,showers,cloud_cover,wind_speed_10m,is_day&timezone=auto&past_days=1`, { timeout: 9000 }),
         axios.get(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&current=us_aqi,pm2_5,pm10,ozone,nitrogen_dioxide,uv_index&hourly=grass_pollen,birch_pollen,ragweed_pollen&timezone=auto`, { timeout: 9000 }).catch(() => ({ data: { current: { us_aqi: -1, pm2_5: 0, pm10: 0, ozone: 0, nitrogen_dioxide: 0, uv_index: 0 }, hourly: { grass_pollen: [], birch_pollen: [], ragweed_pollen: [] } } }))
       ]);
       
@@ -254,12 +265,26 @@ export const useWeather = () => {
         ragweed: aqiHourly.ragweed_pollen && aqiHourly.ragweed_pollen[currentHourIndex] !== undefined ? Math.round(aqiHourly.ragweed_pollen[currentHourIndex]) : 0,
       };
 
+      const refinedCurrentCode = refineWeatherCode(
+        current.weather_code,
+        current.precipitation ?? 0,
+        current.cloud_cover ?? 0,
+        current.rain ?? 0
+      );
+
+      const refinedHourlyCodes = hourly.weather_code.slice(24).map((rawCode: number, idx: number) => {
+        const precip = hourly.precipitation ? (hourly.precipitation.slice(24)[idx] ?? 0) : 0;
+        const cloud = hourly.cloud_cover ? (hourly.cloud_cover.slice(24)[idx] ?? 0) : 0;
+        const rainVal = hourly.rain ? (hourly.rain.slice(24)[idx] ?? 0) : 0;
+        return refineWeatherCode(rawCode, precip, cloud, rainVal);
+      });
+
       const newWeatherData: WeatherData = {
         temperature: current.temperature_2m,
         feelsLike: current.apparent_temperature,
         humidity: current.relative_humidity_2m,
         windSpeed: current.wind_speed_10m,
-        weatherCode: current.weather_code,
+        weatherCode: refinedCurrentCode,
         isDay: current.is_day,
         aqi: aqiCurrent.us_aqi ?? -1,
         pm2_5: Math.round(aqiCurrent.pm2_5 ?? 0),
@@ -289,7 +314,7 @@ export const useWeather = () => {
           temperature: hourly.temperature_2m.slice(24),
           apparentTemperature: hourly.apparent_temperature ? hourly.apparent_temperature.slice(24) : hourly.temperature_2m.slice(24),
           relativeHumidity: hourly.relative_humidity_2m ? hourly.relative_humidity_2m.slice(24) : hourly.temperature_2m.slice(24).map(() => current.relative_humidity_2m),
-          weatherCode: hourly.weather_code.slice(24),
+          weatherCode: refinedHourlyCodes,
           precipitationProbability: hourly.precipitation_probability.slice(24),
           windSpeed: hourly.wind_speed_10m ? hourly.wind_speed_10m.slice(24) : hourly.temperature_2m.slice(24).map(() => current.wind_speed_10m),
           isDay: hourly.is_day ? hourly.is_day.slice(24) : hourly.temperature_2m.slice(24).map(() => 1),
@@ -305,7 +330,7 @@ export const useWeather = () => {
       // Track telemetry
       trackWeatherViewed(placeName, newWeatherData.temperature, newWeatherData.weatherCode, newWeatherData.aqi);
 
-      const fetchedImg = await fetchCityImage(placeName, current.weather_code, current.is_day);
+      const fetchedImg = await fetchCityImage(placeName, refinedCurrentCode, current.is_day);
 
       // Persist to offline cache
       try {
@@ -413,15 +438,24 @@ export const useWeather = () => {
     try {
       const lats = savedCities.map(c => c.latitude).join(',');
       const lons = savedCities.map(c => c.longitude).join(',');
-      const res = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,weather_code,is_day&timezone=auto`, { timeout: 8000 });
+      const res = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,weather_code,precipitation,rain,cloud_cover,is_day&timezone=auto`, { timeout: 8000 });
       
       const data = Array.isArray(res.data) ? res.data : [res.data];
-      return savedCities.map((city, idx) => ({
-        ...city,
-        temp: data[idx]?.current?.temperature_2m ?? 0,
-        weatherCode: data[idx]?.current?.weather_code ?? 0,
-        isDay: data[idx]?.current?.is_day ?? 1,
-      }));
+      return savedCities.map((city, idx) => {
+        const cur = data[idx]?.current;
+        const refinedCode = refineWeatherCode(
+          cur?.weather_code ?? 0,
+          cur?.precipitation ?? 0,
+          cur?.cloud_cover ?? 0,
+          cur?.rain ?? 0
+        );
+        return {
+          ...city,
+          temp: cur?.temperature_2m ?? 0,
+          weatherCode: refinedCode,
+          isDay: cur?.is_day ?? 1,
+        };
+      });
     } catch (e) {
       console.error('Bulk fetch error', e);
       return [];
