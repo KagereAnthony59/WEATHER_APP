@@ -29,6 +29,15 @@ interface Props {
 
 const SETTINGS_PREFS_KEY = '@weather_preferences_v2';
 
+const PRESET_TIMES = [
+  { label: '6:30 AM', value: '06:30' },
+  { label: '7:00 AM', value: '07:00' },
+  { label: '7:30 AM', value: '07:30' },
+  { label: '8:00 AM', value: '08:00' },
+  { label: '8:30 AM', value: '08:30' },
+  { label: '9:00 AM', value: '09:00' },
+];
+
 export const SettingsModal: React.FC<Props> = ({
   visible,
   onClose,
@@ -48,8 +57,6 @@ export const SettingsModal: React.FC<Props> = ({
   const [uvAlerts, setUvAlerts] = useState(true);
   const [preferredTime, setPreferredTime] = useState('07:30');
 
-  const MORNING_TIMES = ['06:30', '07:00', '07:30', '08:00', '08:30', '09:00'];
-
   useEffect(() => {
     (async () => {
       try {
@@ -68,7 +75,6 @@ export const SettingsModal: React.FC<Props> = ({
   }, []);
 
   const savePref = async (key: string, val: any) => {
-    triggerSelection();
     try {
       const updated = {
         morningDigest: key === 'morningDigest' ? val : morningDigest,
@@ -80,6 +86,63 @@ export const SettingsModal: React.FC<Props> = ({
     } catch (e) {
       console.log('Error saving setting pref', e);
     }
+  };
+
+  // Convert "07:30" (24h) to { hour: 7, minute: 30, period: 'AM' }
+  const parseTimeTo12h = (time24: string) => {
+    const [hStr, mStr] = (time24 || '07:30').split(':');
+    let h = parseInt(hStr, 10);
+    if (isNaN(h)) h = 7;
+    let m = parseInt(mStr, 10);
+    if (isNaN(m)) m = 30;
+    
+    const period: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
+    let hour12 = h % 12;
+    if (hour12 === 0) hour12 = 12;
+    return { hour: hour12, minute: m, period };
+  };
+
+  // Convert { hour: 7, minute: 30, period: 'AM' } back to "07:30" string
+  const format12hTo24 = (hour12: number, minute: number, period: 'AM' | 'PM') => {
+    let h24 = hour12;
+    if (period === 'AM') {
+      if (h24 === 12) h24 = 0;
+    } else {
+      if (h24 < 12) h24 += 12;
+    }
+    const hStr = h24.toString().padStart(2, '0');
+    const mStr = minute.toString().padStart(2, '0');
+    return `${hStr}:${mStr}`;
+  };
+
+  const { hour, minute, period } = parseTimeTo12h(preferredTime);
+
+  const changeHour = (delta: number) => {
+    triggerSelection();
+    let newHour = hour + delta;
+    if (newHour > 12) newHour = 1;
+    if (newHour < 1) newHour = 12;
+    const newTime24 = format12hTo24(newHour, minute, period);
+    setPreferredTime(newTime24);
+    savePref('preferredTime', newTime24);
+  };
+
+  const changeMinute = (delta: number) => {
+    triggerSelection();
+    let newMin = minute + delta;
+    if (newMin >= 60) newMin = 0;
+    if (newMin < 0) newMin = 55;
+    const newTime24 = format12hTo24(hour, newMin, period);
+    setPreferredTime(newTime24);
+    savePref('preferredTime', newTime24);
+  };
+
+  const togglePeriod = (newPeriod: 'AM' | 'PM') => {
+    triggerSelection();
+    if (newPeriod === period) return;
+    const newTime24 = format12hTo24(hour, minute, newPeriod);
+    setPreferredTime(newTime24);
+    savePref('preferredTime', newTime24);
   };
 
   return (
@@ -123,6 +186,7 @@ export const SettingsModal: React.FC<Props> = ({
                 <Switch
                   value={morningDigest}
                   onValueChange={(val) => {
+                    triggerSelection();
                     setMorningDigest(val);
                     savePref('morningDigest', val);
                   }}
@@ -130,27 +194,115 @@ export const SettingsModal: React.FC<Props> = ({
                 />
               </View>
 
-              {/* Preferred Time Selector */}
+              {/* Interactive Custom Time Adjuster */}
               {morningDigest && (
                 <View style={[styles.timeSelectorContainer, { borderTopColor: t.borderColor }]}>
-                  <Text style={[styles.timeLabel, { color: t.subtext }]}>Preferred Digest Time:</Text>
+                  <View style={styles.timeHeaderRow}>
+                    <Text style={[styles.timeLabel, { color: t.subtext }]}>Set Digest Delivery Time:</Text>
+                    <View style={[styles.activeTimeBadge, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
+                      <Ionicons name="alarm-outline" size={13} color="#38bdf8" style={{ marginRight: 4 }} />
+                      <Text style={styles.activeTimeBadgeText}>
+                        {hour}:{minute.toString().padStart(2, '0')} {period}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Interactive Stepper Controls */}
+                  <View style={[styles.timePickerCard, { backgroundColor: t.searchBg, borderColor: t.borderColor }]}>
+                    <View style={styles.stepperUnit}>
+                      <Text style={[styles.unitSublabel, { color: t.subtext }]}>HOUR</Text>
+                      <View style={styles.stepperRow}>
+                        <TouchableOpacity
+                          onPress={() => changeHour(-1)}
+                          style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
+                        >
+                          <Ionicons name="remove" size={16} color={t.text} />
+                        </TouchableOpacity>
+                        <Text style={[styles.stepperNumber, { color: t.text }]}>
+                          {hour.toString().padStart(2, '0')}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => changeHour(1)}
+                          style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
+                        >
+                          <Ionicons name="add" size={16} color={t.text} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <Text style={[styles.timeSeparatorColon, { color: t.text }]}>:</Text>
+
+                    <View style={styles.stepperUnit}>
+                      <Text style={[styles.unitSublabel, { color: t.subtext }]}>MINUTE</Text>
+                      <View style={styles.stepperRow}>
+                        <TouchableOpacity
+                          onPress={() => changeMinute(-5)}
+                          style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
+                        >
+                          <Ionicons name="remove" size={16} color={t.text} />
+                        </TouchableOpacity>
+                        <Text style={[styles.stepperNumber, { color: t.text }]}>
+                          {minute.toString().padStart(2, '0')}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => changeMinute(5)}
+                          style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
+                        >
+                          <Ionicons name="add" size={16} color={t.text} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    {/* AM / PM Toggle Box */}
+                    <View style={styles.periodSwitcher}>
+                      <TouchableOpacity
+                        onPress={() => togglePeriod('AM')}
+                        style={[
+                          styles.periodPill,
+                          period === 'AM' && { backgroundColor: '#38bdf8' }
+                        ]}
+                      >
+                        <Text style={[styles.periodPillText, { color: period === 'AM' ? '#0f172a' : t.text }]}>
+                          AM
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => togglePeriod('PM')}
+                        style={[
+                          styles.periodPill,
+                          period === 'PM' && { backgroundColor: '#38bdf8' }
+                        ]}
+                      >
+                        <Text style={[styles.periodPillText, { color: period === 'PM' ? '#0f172a' : t.text }]}>
+                          PM
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Quick Preset Chips */}
+                  <Text style={[styles.presetsTitle, { color: t.subtext }]}>QUICK PRESETS</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeScroll}>
-                    {MORNING_TIMES.map((time) => {
-                      const isSelected = preferredTime === time;
+                    {PRESET_TIMES.map((preset) => {
+                      const isSelected = preferredTime === preset.value;
                       return (
                         <TouchableOpacity
-                          key={time}
+                          key={preset.value}
                           onPress={() => {
-                            setPreferredTime(time);
-                            savePref('preferredTime', time);
+                            triggerSelection();
+                            setPreferredTime(preset.value);
+                            savePref('preferredTime', preset.value);
                           }}
                           style={[
                             styles.timeChip,
-                            { backgroundColor: isSelected ? '#38bdf8' : t.searchBg, borderColor: isSelected ? '#38bdf8' : t.borderColor },
+                            {
+                              backgroundColor: isSelected ? '#38bdf8' : t.searchBg,
+                              borderColor: isSelected ? '#38bdf8' : t.borderColor,
+                            },
                           ]}
                         >
                           <Text style={[styles.timeChipText, { color: isSelected ? '#0f172a' : t.text }]}>
-                            {time}
+                            {preset.label}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -175,6 +327,7 @@ export const SettingsModal: React.FC<Props> = ({
                 <Switch
                   value={rainAlerts}
                   onValueChange={(val) => {
+                    triggerSelection();
                     setRainAlerts(val);
                     savePref('rainAlerts', val);
                   }}
@@ -198,6 +351,7 @@ export const SettingsModal: React.FC<Props> = ({
                 <Switch
                   value={uvAlerts}
                   onValueChange={(val) => {
+                    triggerSelection();
                     setUvAlerts(val);
                     savePref('uvAlerts', val);
                   }}
@@ -406,13 +560,96 @@ const styles = StyleSheet.create({
   timeSelectorContainer: {
     borderTopWidth: 1,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
+  },
+  timeHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   timeLabel: {
     fontSize: 11,
     fontWeight: '600',
-    marginBottom: 8,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  activeTimeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  activeTimeBadgeText: {
+    color: '#38bdf8',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  timePickerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  stepperUnit: {
+    alignItems: 'center',
+  },
+  unitSublabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  stepperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stepCircleBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepperNumber: {
+    fontSize: 18,
+    fontWeight: '800',
+    minWidth: 26,
+    textAlign: 'center',
+  },
+  timeSeparatorColon: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginTop: 12,
+  },
+  periodSwitcher: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    borderRadius: 12,
+    padding: 3,
+    gap: 3,
+    marginTop: 12,
+  },
+  periodPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 9,
+  },
+  periodPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  presetsTitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 6,
     letterSpacing: 0.5,
   },
   timeScroll: {
@@ -426,7 +663,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   timeChipText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   statusCard: {
