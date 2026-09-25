@@ -71,9 +71,15 @@ export default function WeatherScreen() {
 
   useEffect(() => {
     if (weather && address) {
-      loadNotificationSettings().then(settings => {
-        syncWeatherNotificationSchedules(settings, address, weather);
-      });
+      loadNotificationSettings()
+        .then(settings => {
+          syncWeatherNotificationSchedules(settings, address, weather).catch(err => {
+            console.log('Safe warning: syncWeatherNotificationSchedules', err);
+          });
+        })
+        .catch(err => {
+          console.log('Safe warning: loadNotificationSettings', err);
+        });
     }
   }, [weather, address]);
 

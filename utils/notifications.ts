@@ -1,10 +1,9 @@
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface NotificationSettings {
   morningBriefing: boolean;
-  morningTime: string; // "07:00"
+  morningTime: string; // "07:30"
   rainAlert: boolean;
   uvAlert: boolean;
 }
@@ -18,29 +17,56 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   uvAlert: true,
 };
 
-// Configure how notifications are presented when app is foregrounded
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Safe runtime resolver for expo-notifications native module
+let NotificationsModule: any = null;
+let isHandlerSet = false;
+
+const getNotifications = () => {
+  if (NotificationsModule) return NotificationsModule;
+  try {
+    const mod = require('expo-notifications');
+    if (mod) {
+      NotificationsModule = mod;
+      if (!isHandlerSet && typeof mod.setNotificationHandler === 'function') {
+        try {
+          mod.setNotificationHandler({
+            handleNotification: async () => ({
+              shouldShowAlert: true,
+              shouldPlaySound: true,
+              shouldSetBadge: false,
+              shouldShowBanner: true,
+              shouldShowList: true,
+            }),
+          });
+          isHandlerSet = true;
+        } catch (handlerErr) {
+          console.log('Safe warning: setNotificationHandler error', handlerErr);
+        }
+      }
+    }
+  } catch (e) {
+    console.log('Safe warning: expo-notifications native module not present in current binary build');
+  }
+  return NotificationsModule;
+};
 
 /**
- * Request notification permissions from device
+ * Request notification permissions safely from device
  */
 export const requestNotificationPermissions = async (): Promise<boolean> => {
   try {
     if (Platform.OS === 'web') return false;
 
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    const notif = getNotifications();
+    if (!notif || typeof notif.getPermissionsAsync !== 'function') {
+      return false;
+    }
+
+    const { status: existingStatus } = await notif.getPermissionsAsync();
     let finalStatus = existingStatus;
 
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
+    if (existingStatus !== 'granted' && typeof notif.requestPermissionsAsync === 'function') {
+      const { status } = await notif.requestPermissionsAsync();
       finalStatus = status;
     }
 
@@ -48,14 +74,18 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
       return false;
     }
 
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('weather-alerts', {
-        name: 'Weather Alerts & Daily Briefings',
-        importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#38bdf8',
-        sound: 'default',
-      });
+    if (Platform.OS === 'android' && typeof notif.setNotificationChannelAsync === 'function') {
+      try {
+        await notif.setNotificationChannelAsync('weather-alerts', {
+          name: 'Weather Alerts & Daily Briefings',
+          importance: notif.AndroidImportance?.HIGH ?? 4,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#38bdf8',
+          sound: 'default',
+        });
+      } catch (chanErr) {
+        console.log('Channel creation warning:', chanErr);
+      }
     }
 
     return true;
@@ -99,7 +129,7 @@ export const saveNotificationSettings = async (
 };
 
 /**
- * Synchronize daily weather briefing and alert schedules
+ * Synchronize daily weather briefing and alert schedules safely
  */
 export const syncWeatherNotificationSchedules = async (
   settings: NotificationSettings,
@@ -109,8 +139,13 @@ export const syncWeatherNotificationSchedules = async (
   try {
     if (Platform.OS === 'web') return;
 
+    const notif = getNotifications();
+    if (!notif || typeof notif.cancelAllScheduledNotificationsAsync !== 'function') {
+      return;
+    }
+
     // Cancel existing scheduled notifications
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    await notif.cancelAllScheduledNotificationsAsync();
 
     if (!weatherData) return;
 
@@ -118,7 +153,7 @@ export const syncWeatherNotificationSchedules = async (
     if (!granted) return;
 
     // 1. Morning Daily Briefing
-    if (settings.morningBriefing) {
+    if (settings.morningBriefing && typeof notif.scheduleNotificationAsync === 'function') {
       const [hourStr, minuteStr] = (settings.morningTime || '07:30').split(':');
       const hour = parseInt(hourStr, 10) || 7;
       const minute = parseInt(minuteStr, 10) || 30;
@@ -127,7 +162,7 @@ export const syncWeatherNotificationSchedules = async (
       const highTemp = Math.round(weatherData.daily?.temperatureMax?.[0] ?? currentTemp);
       const lowTemp = Math.round(weatherData.daily?.temperatureMin?.[0] ?? currentTemp - 5);
 
-      await Notifications.scheduleNotificationAsync({
+      await notif.scheduleNotificationAsync({
         identifier: 'morning-briefing',
         content: {
           title: `🌤️ Morning Weather for ${cityName}`,
@@ -136,7 +171,7 @@ export const syncWeatherNotificationSchedules = async (
           data: { type: 'morning_briefing', cityName },
         },
         trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          type: notif.SchedulableTriggerInputTypes?.DAILY ?? 'daily',
           hour,
           minute,
         },
@@ -144,10 +179,10 @@ export const syncWeatherNotificationSchedules = async (
     }
 
     // 2. High Rain / Storm Warning Alert
-    if (settings.rainAlert && weatherData.hourly?.precipitationProbability) {
+    if (settings.rainAlert && weatherData.hourly?.precipitationProbability && typeof notif.scheduleNotificationAsync === 'function') {
       const maxPrecip = Math.max(...weatherData.hourly.precipitationProbability.slice(0, 12));
       if (maxPrecip >= 60) {
-        await Notifications.scheduleNotificationAsync({
+        await notif.scheduleNotificationAsync({
           identifier: 'rain-alert',
           content: {
             title: `🌧️ Rain & Commute Alert in ${cityName}`,
@@ -156,7 +191,7 @@ export const syncWeatherNotificationSchedules = async (
             data: { type: 'rain_warning', cityName },
           },
           trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            type: notif.SchedulableTriggerInputTypes?.TIME_INTERVAL ?? 'timeInterval',
             seconds: 60 * 15, // In 15 minutes
             repeats: false,
           },
@@ -165,9 +200,9 @@ export const syncWeatherNotificationSchedules = async (
     }
 
     // 3. Extreme UV Alert
-    if (settings.uvAlert && weatherData.daily?.uvIndexMax?.[0] >= 8) {
+    if (settings.uvAlert && weatherData.daily?.uvIndexMax?.[0] >= 8 && typeof notif.scheduleNotificationAsync === 'function') {
       const uv = Math.round(weatherData.daily.uvIndexMax[0]);
-      await Notifications.scheduleNotificationAsync({
+      await notif.scheduleNotificationAsync({
         identifier: 'uv-alert',
         content: {
           title: `☀️ High UV Index Alert (${uv}) in ${cityName}`,
@@ -176,7 +211,7 @@ export const syncWeatherNotificationSchedules = async (
           data: { type: 'uv_warning', cityName },
         },
         trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          type: notif.SchedulableTriggerInputTypes?.DAILY ?? 'daily',
           hour: 11,
           minute: 0,
         },
@@ -188,14 +223,19 @@ export const syncWeatherNotificationSchedules = async (
 };
 
 /**
- * Trigger an instant test notification so the user can verify
+ * Trigger an instant test notification safely
  */
 export const sendTestWeatherNotification = async (cityName: string, temp: number): Promise<boolean> => {
   try {
+    const notif = getNotifications();
+    if (!notif || typeof notif.scheduleNotificationAsync !== 'function') {
+      return false;
+    }
+
     const granted = await requestNotificationPermissions();
     if (!granted) return false;
 
-    await Notifications.scheduleNotificationAsync({
+    await notif.scheduleNotificationAsync({
       content: {
         title: `🌤️ K & A Weather Alert • ${cityName}`,
         body: `Live update: Currently ${Math.round(temp)}°C with smooth winds. Notifications are working perfectly!`,
