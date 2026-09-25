@@ -138,8 +138,8 @@ def create_document():
         ("Application Name", "K & A Weather"),
         ("Current Version", "1.0.0 (Production Release)"),
         ("Target Platforms", "Android (Direct APK & Google Play AAB), iOS Ready"),
-        ("Technology Stack", "React Native 0.81, Expo SDK 54, React 19, TypeScript 5.9"),
-        ("Cloud Infrastructure", "Expo EAS, GitHub CI/CD, PostHog Cloud Analytics")
+        ("Technology Stack", "React Native 0.81.5, Expo SDK 54, React 19, TypeScript 5.9"),
+        ("Cloud Infrastructure", "Expo EAS (OTA Updates), GitHub CI/CD, PostHog Cloud Analytics (EU)")
     ]
     for row_idx, (label, val) in enumerate(meta_data):
         c1, c2 = meta_table.cell(row_idx, 0), meta_table.cell(row_idx, 1)
@@ -162,17 +162,19 @@ def create_document():
     p.add_run(
         "K & A Weather is an advanced, cross-platform mobile meteorological and biometeorological intelligence suite. "
         "Engineered using React Native and Expo SDK 54, the application prioritizes sub-50ms instant cold-start rendering, "
-        "hyperlocal atmospheric telemetry, live animated precipitation radar, and privacy-conscious real-time product analytics."
+        "hyperlocal atmospheric telemetry, live multi-layer weather radar, biometeorological health indices, driving commute safety, "
+        "lifestyle activity suitability scoring, ambient soundscapes, and privacy-conscious real-time product analytics."
     )
 
     add_heading_2("Core Architectural Pillars")
     add_bullet("Direct client-to-API integration with global Open-Meteo supercomputers eliminates recurring server hosting fees while providing real-time data across every latitude and longitude.", "1. Serverless Resilience: ")
-    add_bullet("Two-tier local caching mechanism ensures the user interface renders the most recent weather snapshot in under 50ms upon app launch, functioning smoothly even without an internet connection.", "2. Instant Cold-Start & Offline Capability: ")
+    add_bullet("Two-tier local caching mechanism (AsyncStorage + Expo FileSystem) ensures the UI renders the most recent weather snapshot in under 50ms upon app launch, functioning smoothly even without an active network.", "2. Instant Cold-Start & Offline Capability: ")
     add_bullet("Custom interactive UI components, dynamic gradient physics reflecting solar zenith and condition codes, celestial sun/moon positioning, and native haptic feedback.", "3. Premium Glassmorphic Design: ")
-    add_bullet("Integrated PostHog real-time telemetry tracks active sessions, user locations, and search popularity without capturing sensitive user credentials.", "4. Cloud Observability: ")
+    add_bullet("Synthesizes temperature, pressure, humidity, wind, and AQI into daily living guidance: attire recommendations, commuting risk scores, arthritis & migraine forecasts, and lifestyle indexes.", "4. Actionable Intelligence: ")
+    add_bullet("Integrated PostHog real-time telemetry tracks active sessions, user locations, and search popularity without capturing sensitive user credentials.", "5. Cloud Observability & Continuous OTA: ")
 
     # =============================================================
-    # 2. APPLICATION PLATFORMS & CLOUD INFRASTRUCTURE
+    # 2. PLATFORMS & CLOUD INFRASTRUCTURE
     # =============================================================
     add_heading_1("2. Platforms & Cloud Infrastructure Ecosystem")
     p = doc.add_paragraph()
@@ -190,10 +192,10 @@ def create_document():
         r.font.color.rgb = RGBColor(255, 255, 255)
 
     plat_rows = [
-        ("Expo EAS (Expo Application Services)", "Cloud build pipeline for native Android (.apk/.aab) and iOS binaries.", "Configured via eas.json (preview APK and production AAB profiles). Remote cloud keystore signing."),
-        ("GitHub & EAS Workflows", "Source code repository and automated CI/CD pipeline.", "Linked via .eas/workflows/create-production-builds.yml. Automatically triggers cloud builds on git push main."),
-        ("PostHog Analytics (EU Cloud)", "Product analytics, active user telemetry, city search tracking, and retention.", "Configured in utils/analytics.ts and app/_layout.tsx using posthog-react-native SDK."),
-        ("GitHub Releases", "Public distribution hub for downloadable APK artifacts.", "Provides permanent, direct-download APK links with built-in version tracking and download counters.")
+        ("Expo EAS (Over-The-Air Updates)", "Zero-downtime instant code deployment directly to user devices on git push.", "Configured via .github/workflows/eas-update.yml and eas.json. Automatically updates JS/TS assets."),
+        ("Expo EAS Build Pipeline", "Cloud build system compiling lightweight native Android binaries (~25MB ARM64 APKs) and Google Play AABs.", "Configured via eas.json with arm64-v8a architecture optimization and remote cloud keystore signing."),
+        ("GitHub CI/CD Actions", "Continuous Integration pipeline triggering automatic EAS OTA updates upon push to main.", "Workflow in .github/workflows/eas-update.yml utilizing EXPO_TOKEN authentication."),
+        ("PostHog Analytics (EU Cloud)", "Product analytics, active user telemetry, city search tracking, and retention monitoring.", "Configured in utils/analytics.ts and app/_layout.tsx using posthog-react-native SDK.")
     ]
     for row_idx, data in enumerate(plat_rows, start=1):
         shd = COLOR_BG_LIGHT if row_idx % 2 == 1 else "FFFFFF"
@@ -214,34 +216,33 @@ def create_document():
 
     add_heading_2("1. Open-Meteo Weather Forecast API")
     add_bullet("Endpoint: https://api.open-meteo.com/v1/forecast", "URL: ")
-    add_bullet("Data Provided: Current temperature, apparent temperature (feels like), relative humidity, surface pressure, precipitation probability, wind speed, wind direction, UV index, and WMO weather codes.", "Metrics: ")
-    add_bullet("Temporal Range: 24-hour historical yesterday max temperature, current conditions, 24-hour hourly simulation, and 7-day extended forecast.", "Forecast Window: ")
+    add_bullet("Data Provided: Current temperature, apparent temperature (feels like), relative humidity, surface pressure, precipitation probability, wind speed, wind gusts, wind direction, UV index, and WMO weather codes.", "Metrics: ")
+    add_bullet("Temporal Range: 24-hour historical yesterday max temperature, current conditions, 48-hour hourly simulation, and 7-day extended forecast.", "Forecast Window: ")
 
     add_heading_2("2. Open-Meteo Air Quality & Biometeorology API")
     add_bullet("Endpoint: https://air-quality-api.open-meteo.com/v1/air-quality", "URL: ")
-    add_bullet("Data Provided: European Air Quality Index (AQI), PM2.5 (Fine Particulate Matter), PM10 (Coarse Particles), Nitrogen Dioxide (NO2), Surface Ozone (O3), Sulphur Dioxide (SO2), Carbon Monoxide (CO), and botanical pollen counts (Grass, Birch, Ragweed).", "Metrics: ")
+    add_bullet("Data Provided: European Air Quality Index (AQI), PM2.5, PM10, Nitrogen Dioxide (NO2), Surface Ozone (O3), Sulphur Dioxide (SO2), and botanical pollen counts (Grass, Birch, Ragweed).", "Metrics: ")
 
     add_heading_2("3. Geocoding & Coordinate Resolution")
     add_bullet("Primary Engine: Open-Meteo Geocoding API (https://geocoding-api.open-meteo.com/v1/search).", "Primary: ")
     add_bullet("Fallback Engine: OpenStreetMap Nominatim (https://nominatim.openstreetmap.org/search) for comprehensive multi-lingual address lookup.", "Fallback: ")
     add_bullet("Local Device Geolocation: Native GPS hardware querying via expo-location with automatic reverse-geocoding.", "Hardware GPS: ")
 
-    add_heading_2("4. RainViewer Live Radar API")
+    add_heading_2("4. RainViewer & Tile Map Radar API")
     add_bullet("Endpoint: https://api.rainviewer.com/public/weather-maps.json", "URL: ")
-    add_bullet("Data Provided: Global satellite precipitation radar tile overlays, animated 10-frame past-to-nowcast radar loops rendered seamlessly on MapView.", "Function: ")
+    add_bullet("Data Provided: Global satellite precipitation radar tile overlays, animated radar nowcasting, wind streamlines, and temperature heatmaps rendered via Leaflet / WebView.", "Function: ")
 
-    add_heading_2("5. Unsplash Dynamic City Backdrops")
+    add_heading_2("5. Unsplash Dynamic City & Condition Backdrops")
     add_bullet("Endpoint: https://api.unsplash.com/search/photos", "URL: ")
-    add_bullet("Function: Fetches high-resolution photographic backdrops matching the active searched city name and current weather condition code.", "Function: ")
+    add_bullet("Function: Fetches high-resolution photographic backdrops matching searched city skylines, with guaranteed fallback to curated HD condition backdrops (clear_day, clear_night, cloudy, rain, snow, thunder, fog).", "Function: ")
 
     # =============================================================
-    # 4. DATABASE VS. CLIENT PERSISTENCE ARCHITECTURE
+    # 4. DATA PERSISTENCE ARCHITECTURE
     # =============================================================
     add_heading_1("4. Data Storage & Persistence Architecture")
     p = doc.add_paragraph()
     p.add_run(
-        "K & A Weather implements a lean, privacy-conscious 2-tier local client storage architecture. "
-        "The application does not maintain a server-side relational database, eliminating data privacy risks, user credential databases, and backend hosting overhead."
+        "K & A Weather implements a lean, privacy-conscious 2-tier local client storage architecture without server databases, eliminating hosting costs and user privacy concerns:"
     )
 
     add_heading_2("Tier 1: Cold-Start Instant Cache (AsyncStorage)")
@@ -252,14 +253,14 @@ def create_document():
     add_heading_2("Tier 2: Persistent Document Store (Expo FileSystem)")
     add_bullet("File Path: FileSystem.documentDirectory + 'weather_settings.json'", "File Path: ")
     add_bullet("Payload: Structured JSON containing saved favorite multi-city lists (city name, latitude, longitude) and user preferences.", "Stored Content: ")
-    add_bullet("Resilience: Stored in the native document sandbox, ensuring user bookmarks survive app updates and OS cache sweeps.", "Persistence: ")
+    add_bullet("Resilience: Stored in the native document sandbox, ensuring bookmarks survive app updates and OS cache sweeps.", "Persistence: ")
 
     # =============================================================
-    # 5. USER INTERFACE & FEATURE BREAKDOWN
+    # 5. COMPREHENSIVE COMPONENT ECOSYSTEM
     # =============================================================
-    add_heading_1("5. Component Specifications & Features")
+    add_heading_1("5. Comprehensive Component Ecosystem & Modules")
 
-    comp_table = doc.add_table(rows=8, cols=2)
+    comp_table = doc.add_table(rows=14, cols=2)
     comp_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     c1, c2 = comp_table.cell(0, 0), comp_table.cell(0, 1)
     c1.width, c2.width = Inches(2.2), Inches(4.3)
@@ -275,13 +276,19 @@ def create_document():
     r2.font.color.rgb = RGBColor(255, 255, 255)
 
     comp_data = [
+        ("WeatherNarrative.tsx", "AI natural-language briefing synthesizing time of day, atmospheric conditions, and day-over-day temperature shifts."),
+        ("WeatherWisdom.tsx", "Dynamic AI advisory engine providing actionable recommendations for outfit/attire layering, health safeguards, and travel commute warnings."),
+        ("DrivingCommuteSafety.tsx", "Road hazard risk scoring (Safe, Moderate Caution, Severe Caution) calculating precipitation, road slickness, wind gusts, and visibility."),
+        ("CelestialArc.tsx", "Astronomical parabolic arc tracking showing live solar zenith angles, sunrise, sunset, golden hours, solar noon, UV peak, and lunar phases."),
+        ("HealthMetrics.tsx", "Biometeorology hub displaying European AQI status, UV index, and specific health alerts for Grass/Birch/Weed pollen, arthritis joint pain, and migraine risk."),
+        ("LifestyleAdvisories.tsx", "Activity suitability scoring cards for Running, Cycling, Stargazing, Patio Dining, Laundry Drying, and Car Washing."),
+        ("TimeTravelSlider.tsx", "Interactive 48-hour horizontal scrubber allowing users to simulate upcoming temperature, cloud cover, and wind transitions."),
+        ("WeatherMap.tsx", "Full-screen interactive Leaflet map with multi-layer precipitation radar, temperature heatmaps, wind streamlines, and satellite tiles."),
+        ("MultiCityDashboard.tsx", "Comparative dashboard modal allowing users to monitor and compare weather across up to 5 bookmarked cities simultaneously."),
+        ("SoundscapePlayer.tsx", "Ambient audio player streaming atmospheric weather soundscapes (Rain, Gentle Wind, Mountain Breeze, Forest Birds, Ocean Waves) via Expo-AV."),
+        ("WeatherShareCard.tsx", "Stylized social weather snapshot card generator with native OS sharing sheet integration."),
         ("WeatherOverlay.tsx", "Procedural animated ambient particle effects rendering falling rain streaks, drifting snow flakes, and thunder flashes."),
-        ("WeatherNarrative.tsx", "AI-style natural language meteorologist summary giving dynamic advice based on current telemetry, humidity, and precipitation probability."),
-        ("TimeTravelSlider.tsx", "Interactive 24-hour horizontal scrubber allowing users to simulate upcoming temperature, precipitation, and day/night transitions in real time."),
-        ("CelestialArc.tsx", "Astronomical sun and moon arc tracking showing live solar zenith angles, sunrise, sunset, and calculated golden hour photo windows."),
-        ("HealthMetrics.tsx", "Biometeorology hub displaying European AQI status, UV index protection ratings, and botanical allergy alerts for Grass, Birch, and Ragweed."),
-        ("WeatherMap.tsx", "Full-screen interactive MapView with animated RainViewer radar satellite loops, storm spotter radar, and city markers."),
-        ("MultiCityDashboard.tsx", "Multi-city comparison modal allowing users to monitor weather across all bookmarked cities simultaneously.")
+        ("useWeather.ts", "Central state machine, geocoding orchestrator, offline cache synchronizer, and Unsplash backdrop resolver.")
     ]
     for row_idx, (cname, cdesc) in enumerate(comp_data, start=1):
         shd = COLOR_BG_LIGHT if row_idx % 2 == 1 else "FFFFFF"
@@ -302,31 +309,32 @@ def create_document():
     p = doc.add_paragraph()
     p.add_run(
         "To provide actionable product insights while respecting user privacy, PostHog mobile analytics is integrated via `utils/analytics.ts`. "
-        "The following event schema is captured:"
+        "The following event schema is captured in real time:"
     )
 
     add_bullet("Fired when a user selects a location from the search bar. Captures city name, country, and geographic coordinates for regional popularity analytics.", "1. 'city_searched': ")
     add_bullet("Fired upon weather data hydration. Captures city name, temperature, WMO weather code, and air quality index to analyze climate distributions.", "2. 'weather_viewed': ")
     add_bullet("Fired when a user favorites or removes a city bookmark, tracking user retention and location loyalty.", "3. 'city_saved_toggle': ")
-    add_bullet("Fired when a user launches the interactive RainViewer radar modal.", "4. 'radar_map_opened': ")
-    add_bullet("Fired when a user interacts with the hourly 24-hour simulation slider.", "5. 'time_travel_scrubbed': ")
-    add_bullet("Automatically tracks active sessions, device models (Samsung, Xiaomi, Pixel), Android OS versions, and user country.", "6. Automatic Telemetry: ")
+    add_bullet("Fired when a user toggles between Celsius (°C) and Fahrenheit (°F).", "4. 'temperature_unit_toggled': ")
+    add_bullet("Fired when a user exports a weather card via the social share card generator.", "5. 'weather_shared': ")
+    add_bullet("Fired when a user launches the interactive multi-layer radar modal.", "6. 'radar_map_opened': ")
+    add_bullet("Fired when a user interacts with the 48-hour simulation slider.", "7. 'time_travel_scrubbed': ")
+    add_bullet("Automatically tracks active sessions, device models (Samsung, Xiaomi, Pixel, iPhone), OS versions, and user country.", "8. Session Telemetry: ")
 
     # =============================================================
-    # 7. PRODUCTION DEPLOYMENT & CI/CD GUIDE
+    # 7. CI/CD & OVER-THE-AIR UPDATE PIPELINE
     # =============================================================
-    add_heading_1("7. Deployment & CI/CD Pipeline")
+    add_heading_1("7. Continuous Delivery & Over-The-Air Updates")
     p = doc.add_paragraph()
-    p.add_run("The application is configured for continuous cloud deployment:")
+    p.add_run("The application utilizes a zero-downtime continuous deployment pipeline:")
+
+    add_heading_2("EAS Over-The-Air Updates (.github/workflows/eas-update.yml)")
+    add_bullet("Every commit pushed to the 'main' branch automatically packages new TypeScript and asset bundles and deploys them to the 'production' channel.", "Automated CI Deployment: ")
+    add_bullet("Installed user devices download and apply updates silently in the background on launch, delivering instant bug fixes and features without requiring app reinstallations.", "Seamless User Experience: ")
 
     add_heading_2("EAS Build Profiles (eas.json)")
-    add_bullet("Profile 'preview': Compiles standalone, installable Android .apk binaries for direct testing and distribution.", "1. Preview APK: ")
-    add_bullet("Profile 'production': Compiles Android App Bundles (.aab) signed with cloud keystores ready for Google Play Store submission.", "2. Production AAB: ")
-
-    add_heading_2("Automated GitHub CI/CD Workflow")
-    add_bullet("Trigger: Any commit pushed to the 'main' branch automatically triggers an EAS cloud workflow.", "CI Trigger: ")
-    add_bullet("Workflow File: .eas/workflows/create-production-builds.yml", "Config File: ")
-    add_bullet("Artifact Delivery: Builds are published to the Expo Dashboard and can be attached directly to GitHub Releases.", "Distribution: ")
+    add_bullet("Profile 'preview': Compiles slim, optimized ~25MB Android .apk binaries targeting arm64-v8a architecture.", "Preview APK: ")
+    add_bullet("Profile 'production': Compiles Android App Bundles (.aab) signed with remote cloud keystores for Google Play Store release.", "Production AAB: ")
 
     # =============================================================
     # 8. CONCLUSION & SIGN-OFF
@@ -334,9 +342,9 @@ def create_document():
     add_heading_1("8. Conclusion & Sign-Off")
     p = doc.add_paragraph()
     p.add_run(
-        "K & A Weather Version 1.0.0 represents a modern benchmark in mobile meteorology and biometeorological intelligence. "
-        "By harmonizing scientific supercomputer forecasts, live satellite radar nowcasting, offline cache resilience, "
-        "automated GitHub CI/CD, and real-time cloud analytics, the application delivers a polished, reliable, and enterprise-grade mobile experience."
+        "K & A Weather Version 1.0.0 represents a modern benchmark in mobile meteorology, biometeorological health intelligence, and commute safety. "
+        "By harmonizing scientific supercomputer forecasts, live multi-layer radar maps, offline cache resilience, "
+        "ambient soundscapes, automated GitHub CI/CD Over-The-Air updates, and real-time cloud telemetry, the application delivers an enterprise-grade mobile experience."
     )
 
     output_path = r"d:\PROJECTS\WEATHER_APP\K_and_A_Weather_v1.0_System_Documentation.docx"
