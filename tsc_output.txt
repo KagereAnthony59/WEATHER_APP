@@ -1,1 +1,0 @@
-app/index.tsx(7,32): error TS2307: Cannot find module '../components/WeatherOverlay' or its corresponding type declarations.
