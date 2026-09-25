@@ -7,19 +7,10 @@ import {
   TouchableOpacity,
   Switch,
   ScrollView,
-  Platform,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { triggerSelection, triggerSuccess, triggerImpactMedium } from '../utils/haptics';
-import {
-  loadNotificationSettings,
-  saveNotificationSettings,
-  sendTestWeatherNotification,
-  requestNotificationPermissions,
-  NotificationSettings,
-  DEFAULT_NOTIFICATION_SETTINGS,
-} from '../utils/notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { triggerSelection } from '../utils/haptics';
 
 interface Props {
   visible: boolean;
@@ -33,11 +24,10 @@ interface Props {
   isMph: boolean;
   setIsMph: (val: boolean) => void;
   cityName: string;
-  weatherData: any;
   theme: any;
 }
 
-const MORNING_TIMES = ['06:30', '07:00', '07:30', '08:00', '08:30', '09:00'];
+const SETTINGS_PREFS_KEY = '@weather_preferences_v2';
 
 export const SettingsModal: React.FC<Props> = ({
   visible,
@@ -51,53 +41,44 @@ export const SettingsModal: React.FC<Props> = ({
   isMph,
   setIsMph,
   cityName,
-  weatherData,
   theme: t,
 }) => {
-  const [notifSettings, setNotifSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
-  const [testSending, setTestSending] = useState(false);
+  const [morningDigest, setMorningDigest] = useState(true);
+  const [rainAlerts, setRainAlerts] = useState(true);
+  const [uvAlerts, setUvAlerts] = useState(true);
+  const [preferredTime, setPreferredTime] = useState('07:30');
+
+  const MORNING_TIMES = ['06:30', '07:00', '07:30', '08:00', '08:30', '09:00'];
 
   useEffect(() => {
-    if (visible) {
-      loadNotificationSettings().then(setNotifSettings);
-    }
-  }, [visible]);
-
-  const updateNotifSetting = async (key: keyof NotificationSettings, value: any) => {
-    triggerSelection();
-    
-    // Check permission if turning on
-    if (value === true && typeof value === 'boolean') {
-      const granted = await requestNotificationPermissions();
-      if (!granted) {
-        Alert.alert(
-          'Permission Required',
-          'Please enable notifications in your device settings to receive weather alerts.',
-          [{ text: 'OK' }]
-        );
-        return;
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(SETTINGS_PREFS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.morningDigest !== undefined) setMorningDigest(parsed.morningDigest);
+          if (parsed.rainAlerts !== undefined) setRainAlerts(parsed.rainAlerts);
+          if (parsed.uvAlerts !== undefined) setUvAlerts(parsed.uvAlerts);
+          if (parsed.preferredTime) setPreferredTime(parsed.preferredTime);
+        }
+      } catch (e) {
+        console.log('Error loading settings prefs', e);
       }
-    }
+    })();
+  }, []);
 
-    const updated = { ...notifSettings, [key]: value };
-    setNotifSettings(updated);
-    await saveNotificationSettings(updated, cityName, weatherData);
-  };
-
-  const handleSendTestNotification = async () => {
-    triggerImpactMedium();
-    setTestSending(true);
-    const success = await sendTestWeatherNotification(
-      cityName || 'Current Location',
-      weatherData?.temperature ?? 24
-    );
-    setTestSending(false);
-
-    if (success) {
-      triggerSuccess();
-      Alert.alert('Notification Sent! 🔔', 'Check your notification bar to see the weather alert.');
-    } else {
-      Alert.alert('Permission Denied', 'Please allow notifications for K & A Weather in device settings.');
+  const savePref = async (key: string, val: any) => {
+    triggerSelection();
+    try {
+      const updated = {
+        morningDigest: key === 'morningDigest' ? val : morningDigest,
+        rainAlerts: key === 'rainAlerts' ? val : rainAlerts,
+        uvAlerts: key === 'uvAlerts' ? val : uvAlerts,
+        preferredTime: key === 'preferredTime' ? val : preferredTime,
+      };
+      await AsyncStorage.setItem(SETTINGS_PREFS_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.log('Error saving setting pref', e);
     }
   };
 
@@ -121,42 +102,48 @@ export const SettingsModal: React.FC<Props> = ({
 
           <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
             
-            {/* SECTION 1: SMART NOTIFICATIONS & WEATHER ALERTS */}
+            {/* SECTION 1: SMART WEATHER INSIGHTS & BRIEFINGS */}
             <View style={styles.sectionHeader}>
-              <Ionicons name="notifications-outline" size={16} color="#38bdf8" />
-              <Text style={[styles.sectionHeaderText, { color: '#38bdf8' }]}>SMART NOTIFICATIONS & ALERTS</Text>
+              <Ionicons name="bulb-outline" size={16} color="#38bdf8" />
+              <Text style={[styles.sectionHeaderText, { color: '#38bdf8' }]}>DAILY BRIEFINGS & ALERTS</Text>
             </View>
 
-            {/* Morning Briefing */}
+            {/* Morning Digest */}
             <View style={[styles.settingCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}>
               <View style={styles.settingRow}>
                 <View style={styles.settingTextCol}>
                   <View style={styles.labelRow}>
                     <Ionicons name="sunny-outline" size={18} color="#f59e0b" style={{ marginRight: 6 }} />
-                    <Text style={[styles.settingText, { color: t.text }]}>Morning Weather Briefing</Text>
+                    <Text style={[styles.settingText, { color: t.text }]}>Morning Weather Narrative</Text>
                   </View>
                   <Text style={[styles.settingSubtext, { color: t.subtext }]}>
-                    Receive a daily digest with predicted high/lows and outfit tips.
+                    Displays AI contextual morning briefings with attire & temperature advice.
                   </Text>
                 </View>
                 <Switch
-                  value={notifSettings.morningBriefing}
-                  onValueChange={(val) => updateNotifSetting('morningBriefing', val)}
+                  value={morningDigest}
+                  onValueChange={(val) => {
+                    setMorningDigest(val);
+                    savePref('morningDigest', val);
+                  }}
                   trackColor={{ true: '#38bdf8', false: '#64748b' }}
                 />
               </View>
 
-              {/* Delivery Time Selector */}
-              {notifSettings.morningBriefing && (
+              {/* Preferred Time Selector */}
+              {morningDigest && (
                 <View style={[styles.timeSelectorContainer, { borderTopColor: t.borderColor }]}>
-                  <Text style={[styles.timeLabel, { color: t.subtext }]}>Delivery Time:</Text>
+                  <Text style={[styles.timeLabel, { color: t.subtext }]}>Preferred Digest Time:</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeScroll}>
                     {MORNING_TIMES.map((time) => {
-                      const isSelected = notifSettings.morningTime === time;
+                      const isSelected = preferredTime === time;
                       return (
                         <TouchableOpacity
                           key={time}
-                          onPress={() => updateNotifSetting('morningTime', time)}
+                          onPress={() => {
+                            setPreferredTime(time);
+                            savePref('preferredTime', time);
+                          }}
                           style={[
                             styles.timeChip,
                             { backgroundColor: isSelected ? '#38bdf8' : t.searchBg, borderColor: isSelected ? '#38bdf8' : t.borderColor },
@@ -173,7 +160,7 @@ export const SettingsModal: React.FC<Props> = ({
               )}
             </View>
 
-            {/* Rain & Severe Weather Alert */}
+            {/* Rain Warning */}
             <View style={[styles.settingCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}>
               <View style={styles.settingRow}>
                 <View style={styles.settingTextCol}>
@@ -182,52 +169,46 @@ export const SettingsModal: React.FC<Props> = ({
                     <Text style={[styles.settingText, { color: t.text }]}>Rain & Commute Warning</Text>
                   </View>
                   <Text style={[styles.settingSubtext, { color: t.subtext }]}>
-                    Alerts you when rain probability exceeds 60% in upcoming hours.
+                    Highlights severe roadway caution and slickness alerts before heavy downpours.
                   </Text>
                 </View>
                 <Switch
-                  value={notifSettings.rainAlert}
-                  onValueChange={(val) => updateNotifSetting('rainAlert', val)}
+                  value={rainAlerts}
+                  onValueChange={(val) => {
+                    setRainAlerts(val);
+                    savePref('rainAlerts', val);
+                  }}
                   trackColor={{ true: '#38bdf8', false: '#64748b' }}
                 />
               </View>
             </View>
 
-            {/* Extreme UV Protection Alert */}
+            {/* UV Alert */}
             <View style={[styles.settingCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}>
               <View style={styles.settingRow}>
                 <View style={styles.settingTextCol}>
                   <View style={styles.labelRow}>
                     <Ionicons name="shield-checkmark-outline" size={18} color="#ec4899" style={{ marginRight: 6 }} />
-                    <Text style={[styles.settingText, { color: t.text }]}>Extreme UV Alert</Text>
+                    <Text style={[styles.settingText, { color: t.text }]}>Extreme UV Sun Protection</Text>
                   </View>
                   <Text style={[styles.settingSubtext, { color: t.subtext }]}>
-                    Warns when UV Index reaches 8+ to protect skin during midday.
+                    Highlights peak UV Index warnings (8+) with safe exposure time guidance.
                   </Text>
                 </View>
                 <Switch
-                  value={notifSettings.uvAlert}
-                  onValueChange={(val) => updateNotifSetting('uvAlert', val)}
+                  value={uvAlerts}
+                  onValueChange={(val) => {
+                    setUvAlerts(val);
+                    savePref('uvAlerts', val);
+                  }}
                   trackColor={{ true: '#38bdf8', false: '#64748b' }}
                 />
               </View>
             </View>
 
-            {/* Test Notification Button */}
-            <TouchableOpacity
-              onPress={handleSendTestNotification}
-              disabled={testSending}
-              style={[styles.testButton, { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.4)' }]}
-            >
-              <Ionicons name="paper-plane-outline" size={16} color="#38bdf8" />
-              <Text style={styles.testButtonText}>
-                {testSending ? 'Sending Sample Alert...' : 'Send Test Weather Notification'}
-              </Text>
-            </TouchableOpacity>
-
 
             {/* SECTION 2: APPEARANCE & THEME */}
-            <View style={[styles.sectionHeader, { marginTop: 22 }]}>
+            <View style={[styles.sectionHeader, { marginTop: 20 }]}>
               <Ionicons name="color-palette-outline" size={16} color="#a855f7" />
               <Text style={[styles.sectionHeaderText, { color: '#a855f7' }]}>APPEARANCE & DISPLAY</Text>
             </View>
@@ -264,7 +245,7 @@ export const SettingsModal: React.FC<Props> = ({
 
 
             {/* SECTION 3: MEASUREMENT UNITS */}
-            <View style={[styles.sectionHeader, { marginTop: 22 }]}>
+            <View style={[styles.sectionHeader, { marginTop: 20 }]}>
               <Ionicons name="speedometer-outline" size={16} color="#10b981" />
               <Text style={[styles.sectionHeaderText, { color: '#10b981' }]}>UNITS OF MEASUREMENT</Text>
             </View>
@@ -307,15 +288,15 @@ export const SettingsModal: React.FC<Props> = ({
                 <Text style={[styles.statusValue, { color: t.text }]}>v1.0.0 (Production)</Text>
               </View>
               <View style={styles.statusRow}>
-                <Text style={[styles.statusLabel, { color: t.subtext }]}>OTA Channel</Text>
+                <Text style={[styles.statusLabel, { color: t.subtext }]}>OTA Delivery</Text>
                 <View style={styles.badgeRow}>
                   <View style={styles.liveDot} />
-                  <Text style={[styles.statusValue, { color: '#38bdf8' }]}>production</Text>
+                  <Text style={[styles.statusValue, { color: '#38bdf8' }]}>Active (GitHub Actions)</Text>
                 </View>
               </View>
               <View style={styles.statusRow}>
-                <Text style={[styles.statusLabel, { color: t.subtext }]}>PostHog Telemetry</Text>
-                <Text style={[styles.statusValue, { color: '#4ade80' }]}>Connected (EU Cloud)</Text>
+                <Text style={[styles.statusLabel, { color: t.subtext }]}>Active Location</Text>
+                <Text style={[styles.statusValue, { color: t.text }]} numberOfLines={1}>{cityName || 'Detecting...'}</Text>
               </View>
             </View>
 
@@ -445,22 +426,6 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   timeChipText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  testButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 8,
-    marginBottom: 4,
-  },
-  testButtonText: {
-    color: '#38bdf8',
     fontSize: 13,
     fontWeight: '700',
   },

@@ -18,7 +18,6 @@ import { WeatherShareCard } from '../components/WeatherShareCard';
 import { SettingsModal } from '../components/SettingsModal';
 import { triggerImpactLight, triggerImpactMedium, triggerSelection } from '../utils/haptics';
 import { trackCitySearch, trackRadarOpened, trackTimeTravel, trackAppOpened } from '../utils/analytics';
-import { loadNotificationSettings, syncWeatherNotificationSchedules } from '../utils/notifications';
 
 export default function WeatherScreen() {
   const { 
@@ -68,20 +67,6 @@ export default function WeatherScreen() {
   useEffect(() => {
     trackAppOpened();
   }, []);
-
-  useEffect(() => {
-    if (weather && address) {
-      loadNotificationSettings()
-        .then(settings => {
-          syncWeatherNotificationSchedules(settings, address, weather).catch(err => {
-            console.log('Safe warning: syncWeatherNotificationSchedules', err);
-          });
-        })
-        .catch(err => {
-          console.log('Safe warning: loadNotificationSettings', err);
-        });
-    }
-  }, [weather, address]);
 
   useEffect(() => {
     if (!loading) {
@@ -577,7 +562,6 @@ export default function WeatherScreen() {
           isMph={isMph}
           setIsMph={setIsMph}
           cityName={address}
-          weatherData={weather}
           theme={t}
         />
 
