@@ -207,74 +207,97 @@ export const SettingsModal: React.FC<Props> = ({
                     </View>
                   </View>
 
-                  {/* Interactive Stepper Controls */}
+                  {/* Fully Responsive Stepper & Segmented AM/PM Card */}
                   <View style={[styles.timePickerCard, { backgroundColor: t.searchBg, borderColor: t.borderColor }]}>
-                    <View style={styles.stepperUnit}>
-                      <Text style={[styles.unitSublabel, { color: t.subtext }]}>HOUR</Text>
-                      <View style={styles.stepperRow}>
-                        <TouchableOpacity
-                          onPress={() => changeHour(-1)}
-                          style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
-                        >
-                          <Ionicons name="remove" size={16} color={t.text} />
-                        </TouchableOpacity>
-                        <Text style={[styles.stepperNumber, { color: t.text }]}>
-                          {hour.toString().padStart(2, '0')}
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() => changeHour(1)}
-                          style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
-                        >
-                          <Ionicons name="add" size={16} color={t.text} />
-                        </TouchableOpacity>
+                    
+                    {/* Top Row: Hour and Minute Steppers */}
+                    <View style={styles.stepperMainRow}>
+                      <View style={styles.stepperUnit}>
+                        <Text style={[styles.unitSublabel, { color: t.subtext }]}>HOUR</Text>
+                        <View style={styles.stepperRow}>
+                          <TouchableOpacity
+                            onPress={() => changeHour(-1)}
+                            style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="remove" size={16} color={t.text} />
+                          </TouchableOpacity>
+                          <Text style={[styles.stepperNumber, { color: t.text }]}>
+                            {hour.toString().padStart(2, '0')}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => changeHour(1)}
+                            style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="add" size={16} color={t.text} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <Text style={[styles.timeSeparatorColon, { color: t.text }]}>:</Text>
+
+                      <View style={styles.stepperUnit}>
+                        <Text style={[styles.unitSublabel, { color: t.subtext }]}>MINUTE</Text>
+                        <View style={styles.stepperRow}>
+                          <TouchableOpacity
+                            onPress={() => changeMinute(-5)}
+                            style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="remove" size={16} color={t.text} />
+                          </TouchableOpacity>
+                          <Text style={[styles.stepperNumber, { color: t.text }]}>
+                            {minute.toString().padStart(2, '0')}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => changeMinute(5)}
+                            style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="add" size={16} color={t.text} />
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
 
-                    <Text style={[styles.timeSeparatorColon, { color: t.text }]}>:</Text>
-
-                    <View style={styles.stepperUnit}>
-                      <Text style={[styles.unitSublabel, { color: t.subtext }]}>MINUTE</Text>
-                      <View style={styles.stepperRow}>
-                        <TouchableOpacity
-                          onPress={() => changeMinute(-5)}
-                          style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
-                        >
-                          <Ionicons name="remove" size={16} color={t.text} />
-                        </TouchableOpacity>
-                        <Text style={[styles.stepperNumber, { color: t.text }]}>
-                          {minute.toString().padStart(2, '0')}
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() => changeMinute(5)}
-                          style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
-                        >
-                          <Ionicons name="add" size={16} color={t.text} />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-
-                    {/* AM / PM Toggle Box */}
-                    <View style={styles.periodSwitcher}>
+                    {/* Bottom Row: Full-Width AM / PM Segmented Control */}
+                    <View style={[styles.periodSegmentedBar, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}>
                       <TouchableOpacity
                         onPress={() => togglePeriod('AM')}
                         style={[
-                          styles.periodPill,
-                          period === 'AM' && { backgroundColor: '#38bdf8' }
+                          styles.periodSegmentBtn,
+                          period === 'AM' && { backgroundColor: '#38bdf8' },
                         ]}
+                        activeOpacity={0.8}
                       >
-                        <Text style={[styles.periodPillText, { color: period === 'AM' ? '#0f172a' : t.text }]}>
-                          AM
+                        <Ionicons
+                          name="sunny-outline"
+                          size={14}
+                          color={period === 'AM' ? '#0f172a' : '#f59e0b'}
+                          style={{ marginRight: 6 }}
+                        />
+                        <Text style={[styles.periodSegmentText, { color: period === 'AM' ? '#0f172a' : t.text }]}>
+                          AM (Morning)
                         </Text>
                       </TouchableOpacity>
+
                       <TouchableOpacity
                         onPress={() => togglePeriod('PM')}
                         style={[
-                          styles.periodPill,
-                          period === 'PM' && { backgroundColor: '#38bdf8' }
+                          styles.periodSegmentBtn,
+                          period === 'PM' && { backgroundColor: '#38bdf8' },
                         ]}
+                        activeOpacity={0.8}
                       >
-                        <Text style={[styles.periodPillText, { color: period === 'PM' ? '#0f172a' : t.text }]}>
-                          PM
+                        <Ionicons
+                          name="moon-outline"
+                          size={14}
+                          color={period === 'PM' ? '#0f172a' : '#818cf8'}
+                          style={{ marginRight: 6 }}
+                        />
+                        <Text style={[styles.periodSegmentText, { color: period === 'PM' ? '#0f172a' : t.text }]}>
+                          PM (Evening)
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -587,64 +610,70 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   timePickerCard: {
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  stepperMainRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
+    justifyContent: 'center',
+    gap: 16,
     marginBottom: 12,
   },
   stepperUnit: {
     alignItems: 'center',
   },
   unitSublabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '800',
-    marginBottom: 4,
-    letterSpacing: 0.5,
+    marginBottom: 6,
+    letterSpacing: 0.8,
   },
   stepperRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   stepCircleBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   stepperNumber: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '800',
-    minWidth: 26,
+    minWidth: 30,
     textAlign: 'center',
   },
   timeSeparatorColon: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '800',
-    marginTop: 12,
+    marginTop: 16,
   },
-  periodSwitcher: {
+  periodSegmentedBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    borderRadius: 12,
+    borderRadius: 14,
+    borderWidth: 1,
     padding: 3,
-    gap: 3,
-    marginTop: 12,
+    gap: 4,
   },
-  periodPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 9,
+  periodSegmentBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 9,
+    borderRadius: 11,
   },
-  periodPillText: {
+  periodSegmentText: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   presetsTitle: {
     fontSize: 10,
