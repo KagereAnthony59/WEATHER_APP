@@ -15,8 +15,10 @@ import { TimeTravelSlider } from '../components/TimeTravelSlider';
 import { WeatherWisdom } from '../components/WeatherWisdom';
 import { DrivingCommuteSafety } from '../components/DrivingCommuteSafety';
 import { WeatherShareCard } from '../components/WeatherShareCard';
+import { SettingsModal } from '../components/SettingsModal';
 import { triggerImpactLight, triggerImpactMedium, triggerSelection } from '../utils/haptics';
 import { trackCitySearch, trackRadarOpened, trackTimeTravel, trackAppOpened } from '../utils/analytics';
+import { loadNotificationSettings, syncWeatherNotificationSchedules } from '../utils/notifications';
 
 export default function WeatherScreen() {
   const { 
@@ -66,6 +68,14 @@ export default function WeatherScreen() {
   useEffect(() => {
     trackAppOpened();
   }, []);
+
+  useEffect(() => {
+    if (weather && address) {
+      loadNotificationSettings().then(settings => {
+        syncWeatherNotificationSchedules(settings, address, weather);
+      });
+    }
+  }, [weather, address]);
 
   useEffect(() => {
     if (!loading) {
@@ -548,51 +558,22 @@ export default function WeatherScreen() {
           ) : null}
         </View>
 
-        {/* Settings Modal */}
-        <Modal visible={settingsVisible} animationType="fade" transparent={true} onRequestClose={() => setSettingsVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: t.modalBg }]}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: t.text }]}>Settings & Preferences</Text>
-                <TouchableOpacity onPress={() => setSettingsVisible(false)}>
-                  <Ionicons name="close" size={26} color={t.text} />
-                </TouchableOpacity>
-              </View>
-              
-              <View style={[styles.settingRow, { borderBottomColor: t.modalBorder }]}>
-                <View>
-                  <Text style={[styles.settingText, { color: t.text }]}>App Theme</Text>
-                  <Text style={[styles.settingSubtext, { color: t.subtext }]}>{isDarkMode ? 'Dark Glass' : 'Light Sky'}</Text>
-                </View>
-                <Switch value={isDarkMode} onValueChange={(val) => { triggerSelection(); setIsDarkMode(val); }} trackColor={{ true: '#38bdf8', false: '#cbd5e1' }} />
-              </View>
-
-              <View style={[styles.settingRow, { borderBottomColor: t.modalBorder }]}>
-                <View>
-                  <Text style={[styles.settingText, { color: t.text }]}>Time Format</Text>
-                  <Text style={[styles.settingSubtext, { color: t.subtext }]}>{is24Hour ? '24-Hour (14:00)' : '12-Hour (2:00 PM)'}</Text>
-                </View>
-                <Switch value={is24Hour} onValueChange={(val) => { triggerSelection(); setIs24Hour(val); }} trackColor={{ true: '#38bdf8', false: '#cbd5e1' }} />
-              </View>
-
-              <View style={[styles.settingRow, { borderBottomColor: t.modalBorder }]}>
-                <View>
-                  <Text style={[styles.settingText, { color: t.text }]}>Temperature Unit</Text>
-                  <Text style={[styles.settingSubtext, { color: t.subtext }]}>{isFahrenheit ? 'Fahrenheit (°F)' : 'Celsius (°C)'}</Text>
-                </View>
-                <Switch value={isFahrenheit} onValueChange={(val) => { triggerSelection(); setIsFahrenheit(val); }} trackColor={{ true: '#38bdf8', false: '#cbd5e1' }} />
-              </View>
-
-              <View style={[styles.settingRow, { borderBottomWidth: 0 }]}>
-                <View>
-                  <Text style={[styles.settingText, { color: t.text }]}>Wind Speed Unit</Text>
-                  <Text style={[styles.settingSubtext, { color: t.subtext }]}>{isMph ? 'Miles / hr' : 'Kilometers / hr'}</Text>
-                </View>
-                <Switch value={isMph} onValueChange={(val) => { triggerSelection(); setIsMph(val); }} trackColor={{ true: '#38bdf8', false: '#cbd5e1' }} />
-              </View>
-            </View>
-          </View>
-        </Modal>
+        {/* Comprehensive Settings Modal */}
+        <SettingsModal
+          visible={settingsVisible}
+          onClose={() => setSettingsVisible(false)}
+          isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
+          is24Hour={is24Hour}
+          setIs24Hour={setIs24Hour}
+          isFahrenheit={isFahrenheit}
+          setIsFahrenheit={setIsFahrenheit}
+          isMph={isMph}
+          setIsMph={setIsMph}
+          cityName={address}
+          weatherData={weather}
+          theme={t}
+        />
 
         {/* Multi-City Compare Modal */}
         <MultiCityDashboard 
