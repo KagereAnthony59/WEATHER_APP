@@ -64,12 +64,9 @@ export const SettingsModal: React.FC<Props> = ({
   const savePref = async (key: string, val: any) => {
     try {
       const raw = await AsyncStorage.getItem(SETTINGS_PREFS_KEY);
-      const existing = raw ? JSON.parse(raw) : {};
-      const updated = {
-        ...existing,
-        [key]: val,
-      };
-      await AsyncStorage.setItem(SETTINGS_PREFS_KEY, JSON.stringify(updated));
+      const current = raw ? JSON.parse(raw) : {};
+      current[key] = val;
+      await AsyncStorage.setItem(SETTINGS_PREFS_KEY, JSON.stringify(current));
     } catch (e) {
       console.log('Error saving setting pref', e);
     }
@@ -95,10 +92,10 @@ export const SettingsModal: React.FC<Props> = ({
 
           <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
             
-            {/* SECTION 1: SMART WEATHER ALERTS */}
+            {/* SECTION 1: SMART WEATHER INSIGHTS & ALERTS */}
             <View style={styles.sectionHeader}>
               <Ionicons name="bulb-outline" size={16} color="#38bdf8" />
-              <Text style={[styles.sectionHeaderText, { color: '#38bdf8' }]}>WEATHER ALERTS & NOTIFICATIONS</Text>
+              <Text style={[styles.sectionHeaderText, { color: '#38bdf8' }]}>ALERTS & ADVISORIES</Text>
             </View>
 
             {/* Rain Warning */}
@@ -345,121 +342,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
     lineHeight: 16,
-  },
-  timeSelectorContainer: {
-    borderTopWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  timeHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  timeLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  activeTimeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  activeTimeBadgeText: {
-    color: '#38bdf8',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  timePickerCard: {
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    marginBottom: 14,
-  },
-  stepperMainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 12,
-  },
-  stepperUnit: {
-    alignItems: 'center',
-  },
-  unitSublabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    marginBottom: 6,
-    letterSpacing: 0.8,
-  },
-  stepperRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  stepCircleBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stepperNumber: {
-    fontSize: 22,
-    fontWeight: '800',
-    minWidth: 30,
-    textAlign: 'center',
-  },
-  timeSeparatorColon: {
-    fontSize: 24,
-    fontWeight: '800',
-    marginTop: 16,
-  },
-  periodSegmentedBar: {
-    flexDirection: 'row',
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 3,
-    gap: 4,
-  },
-  periodSegmentBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    borderRadius: 11,
-  },
-  periodSegmentText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  presetsTitle: {
-    fontSize: 10,
-    fontWeight: '700',
-    marginBottom: 6,
-    letterSpacing: 0.5,
-  },
-  timeScroll: {
-    flexDirection: 'row',
-  },
-  timeChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginRight: 8,
-  },
-  timeChipText: {
-    fontSize: 12,
-    fontWeight: '700',
   },
   statusCard: {
     marginTop: 18,
