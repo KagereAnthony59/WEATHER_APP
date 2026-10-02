@@ -29,15 +29,6 @@ interface Props {
 
 const SETTINGS_PREFS_KEY = '@weather_preferences_v2';
 
-const PRESET_TIMES = [
-  { label: '6:30 AM', value: '06:30' },
-  { label: '7:00 AM', value: '07:00' },
-  { label: '7:30 AM', value: '07:30' },
-  { label: '8:00 AM', value: '08:00' },
-  { label: '8:30 AM', value: '08:30' },
-  { label: '9:00 AM', value: '09:00' },
-];
-
 export const SettingsModal: React.FC<Props> = ({
   visible,
   onClose,
@@ -52,10 +43,8 @@ export const SettingsModal: React.FC<Props> = ({
   cityName,
   theme: t,
 }) => {
-  const [morningDigest, setMorningDigest] = useState(true);
   const [rainAlerts, setRainAlerts] = useState(true);
   const [uvAlerts, setUvAlerts] = useState(true);
-  const [preferredTime, setPreferredTime] = useState('07:30');
 
   useEffect(() => {
     (async () => {
@@ -63,10 +52,8 @@ export const SettingsModal: React.FC<Props> = ({
         const raw = await AsyncStorage.getItem(SETTINGS_PREFS_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed.morningDigest !== undefined) setMorningDigest(parsed.morningDigest);
           if (parsed.rainAlerts !== undefined) setRainAlerts(parsed.rainAlerts);
           if (parsed.uvAlerts !== undefined) setUvAlerts(parsed.uvAlerts);
-          if (parsed.preferredTime) setPreferredTime(parsed.preferredTime);
         }
       } catch (e) {
         console.log('Error loading settings prefs', e);
@@ -76,73 +63,16 @@ export const SettingsModal: React.FC<Props> = ({
 
   const savePref = async (key: string, val: any) => {
     try {
+      const raw = await AsyncStorage.getItem(SETTINGS_PREFS_KEY);
+      const existing = raw ? JSON.parse(raw) : {};
       const updated = {
-        morningDigest: key === 'morningDigest' ? val : morningDigest,
-        rainAlerts: key === 'rainAlerts' ? val : rainAlerts,
-        uvAlerts: key === 'uvAlerts' ? val : uvAlerts,
-        preferredTime: key === 'preferredTime' ? val : preferredTime,
+        ...existing,
+        [key]: val,
       };
       await AsyncStorage.setItem(SETTINGS_PREFS_KEY, JSON.stringify(updated));
     } catch (e) {
       console.log('Error saving setting pref', e);
     }
-  };
-
-  // Convert "07:30" (24h) to { hour: 7, minute: 30, period: 'AM' }
-  const parseTimeTo12h = (time24: string) => {
-    const [hStr, mStr] = (time24 || '07:30').split(':');
-    let h = parseInt(hStr, 10);
-    if (isNaN(h)) h = 7;
-    let m = parseInt(mStr, 10);
-    if (isNaN(m)) m = 30;
-    
-    const period: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
-    let hour12 = h % 12;
-    if (hour12 === 0) hour12 = 12;
-    return { hour: hour12, minute: m, period };
-  };
-
-  // Convert { hour: 7, minute: 30, period: 'AM' } back to "07:30" string
-  const format12hTo24 = (hour12: number, minute: number, period: 'AM' | 'PM') => {
-    let h24 = hour12;
-    if (period === 'AM') {
-      if (h24 === 12) h24 = 0;
-    } else {
-      if (h24 < 12) h24 += 12;
-    }
-    const hStr = h24.toString().padStart(2, '0');
-    const mStr = minute.toString().padStart(2, '0');
-    return `${hStr}:${mStr}`;
-  };
-
-  const { hour, minute, period } = parseTimeTo12h(preferredTime);
-
-  const changeHour = (delta: number) => {
-    triggerSelection();
-    let newHour = hour + delta;
-    if (newHour > 12) newHour = 1;
-    if (newHour < 1) newHour = 12;
-    const newTime24 = format12hTo24(newHour, minute, period);
-    setPreferredTime(newTime24);
-    savePref('preferredTime', newTime24);
-  };
-
-  const changeMinute = (delta: number) => {
-    triggerSelection();
-    let newMin = minute + delta;
-    if (newMin >= 60) newMin = 0;
-    if (newMin < 0) newMin = 55;
-    const newTime24 = format12hTo24(hour, newMin, period);
-    setPreferredTime(newTime24);
-    savePref('preferredTime', newTime24);
-  };
-
-  const togglePeriod = (newPeriod: 'AM' | 'PM') => {
-    triggerSelection();
-    if (newPeriod === period) return;
-    const newTime24 = format12hTo24(hour, minute, newPeriod);
-    setPreferredTime(newTime24);
-    savePref('preferredTime', newTime24);
   };
 
   return (
@@ -165,174 +95,10 @@ export const SettingsModal: React.FC<Props> = ({
 
           <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
             
-            {/* SECTION 1: SMART WEATHER INSIGHTS & BRIEFINGS */}
+            {/* SECTION 1: SMART WEATHER ALERTS */}
             <View style={styles.sectionHeader}>
               <Ionicons name="bulb-outline" size={16} color="#38bdf8" />
-              <Text style={[styles.sectionHeaderText, { color: '#38bdf8' }]}>DAILY BRIEFINGS & ALERTS</Text>
-            </View>
-
-            {/* Morning Digest */}
-            <View style={[styles.settingCard, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}>
-              <View style={styles.settingRow}>
-                <View style={styles.settingTextCol}>
-                  <View style={styles.labelRow}>
-                    <Ionicons name="sunny-outline" size={18} color="#f59e0b" style={{ marginRight: 6 }} />
-                    <Text style={[styles.settingText, { color: t.text }]}>Morning Weather Narrative</Text>
-                  </View>
-                  <Text style={[styles.settingSubtext, { color: t.subtext }]}>
-                    Displays AI contextual morning briefings with attire & temperature advice.
-                  </Text>
-                </View>
-                <Switch
-                  value={morningDigest}
-                  onValueChange={(val) => {
-                    triggerSelection();
-                    setMorningDigest(val);
-                    savePref('morningDigest', val);
-                  }}
-                  trackColor={{ true: '#38bdf8', false: '#64748b' }}
-                />
-              </View>
-
-              {/* Interactive Custom Time Adjuster */}
-              {morningDigest && (
-                <View style={[styles.timeSelectorContainer, { borderTopColor: t.borderColor }]}>
-                  <View style={styles.timeHeaderRow}>
-                    <Text style={[styles.timeLabel, { color: t.subtext }]}>Set Digest Delivery Time:</Text>
-                    <View style={[styles.activeTimeBadge, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
-                      <Ionicons name="alarm-outline" size={13} color="#38bdf8" style={{ marginRight: 4 }} />
-                      <Text style={styles.activeTimeBadgeText}>
-                        {hour}:{minute.toString().padStart(2, '0')} {period}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Fully Responsive Stepper & Segmented AM/PM Card */}
-                  <View style={[styles.timePickerCard, { backgroundColor: t.searchBg, borderColor: t.borderColor }]}>
-                    
-                    {/* Top Row: Hour and Minute Steppers */}
-                    <View style={styles.stepperMainRow}>
-                      <View style={styles.stepperUnit}>
-                        <Text style={[styles.unitSublabel, { color: t.subtext }]}>HOUR</Text>
-                        <View style={styles.stepperRow}>
-                          <TouchableOpacity
-                            onPress={() => changeHour(-1)}
-                            style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="remove" size={16} color={t.text} />
-                          </TouchableOpacity>
-                          <Text style={[styles.stepperNumber, { color: t.text }]}>
-                            {hour.toString().padStart(2, '0')}
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => changeHour(1)}
-                            style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="add" size={16} color={t.text} />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-
-                      <Text style={[styles.timeSeparatorColon, { color: t.text }]}>:</Text>
-
-                      <View style={styles.stepperUnit}>
-                        <Text style={[styles.unitSublabel, { color: t.subtext }]}>MINUTE</Text>
-                        <View style={styles.stepperRow}>
-                          <TouchableOpacity
-                            onPress={() => changeMinute(-5)}
-                            style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="remove" size={16} color={t.text} />
-                          </TouchableOpacity>
-                          <Text style={[styles.stepperNumber, { color: t.text }]}>
-                            {minute.toString().padStart(2, '0')}
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => changeMinute(5)}
-                            style={[styles.stepCircleBtn, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="add" size={16} color={t.text} />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* Bottom Row: Full-Width AM / PM Segmented Control */}
-                    <View style={[styles.periodSegmentedBar, { backgroundColor: t.cardBg, borderColor: t.borderColor }]}>
-                      <TouchableOpacity
-                        onPress={() => togglePeriod('AM')}
-                        style={[
-                          styles.periodSegmentBtn,
-                          period === 'AM' && { backgroundColor: '#38bdf8' },
-                        ]}
-                        activeOpacity={0.8}
-                      >
-                        <Ionicons
-                          name="sunny-outline"
-                          size={14}
-                          color={period === 'AM' ? '#0f172a' : '#f59e0b'}
-                          style={{ marginRight: 6 }}
-                        />
-                        <Text style={[styles.periodSegmentText, { color: period === 'AM' ? '#0f172a' : t.text }]}>
-                          AM (Morning)
-                        </Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        onPress={() => togglePeriod('PM')}
-                        style={[
-                          styles.periodSegmentBtn,
-                          period === 'PM' && { backgroundColor: '#38bdf8' },
-                        ]}
-                        activeOpacity={0.8}
-                      >
-                        <Ionicons
-                          name="moon-outline"
-                          size={14}
-                          color={period === 'PM' ? '#0f172a' : '#818cf8'}
-                          style={{ marginRight: 6 }}
-                        />
-                        <Text style={[styles.periodSegmentText, { color: period === 'PM' ? '#0f172a' : t.text }]}>
-                          PM (Evening)
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  {/* Quick Preset Chips */}
-                  <Text style={[styles.presetsTitle, { color: t.subtext }]}>QUICK PRESETS</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeScroll}>
-                    {PRESET_TIMES.map((preset) => {
-                      const isSelected = preferredTime === preset.value;
-                      return (
-                        <TouchableOpacity
-                          key={preset.value}
-                          onPress={() => {
-                            triggerSelection();
-                            setPreferredTime(preset.value);
-                            savePref('preferredTime', preset.value);
-                          }}
-                          style={[
-                            styles.timeChip,
-                            {
-                              backgroundColor: isSelected ? '#38bdf8' : t.searchBg,
-                              borderColor: isSelected ? '#38bdf8' : t.borderColor,
-                            },
-                          ]}
-                        >
-                          <Text style={[styles.timeChipText, { color: isSelected ? '#0f172a' : t.text }]}>
-                            {preset.label}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                </View>
-              )}
+              <Text style={[styles.sectionHeaderText, { color: '#38bdf8' }]}>WEATHER ALERTS & NOTIFICATIONS</Text>
             </View>
 
             {/* Rain Warning */}
