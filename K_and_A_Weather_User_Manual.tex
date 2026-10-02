@@ -1,0 +1,469 @@
+\documentclass[11pt,a4paper]{article}
+
+% =============================================================================
+% PACKAGES & DOCUMENT SETUP
+% =============================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=0.85in,top=0.9in,bottom=0.9in]{geometry}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,backgrounds}
+\usepackage{lastpage}
+\usepackage{microtype}
+\usepackage{float}
+\usepackage[hidelinks,colorlinks=true,linkcolor=DeepNavy,urlcolor=OceanBlue,citecolor=OceanBlue]{hyperref}
+
+% =============================================================================
+% EXECUTIVE COLOR PALETTE
+% =============================================================================
+\definecolor{DeepNavy}{HTML}{1A365D}       % Primary Brand #1A365D
+\definecolor{NavyLight}{HTML}{2B4C7E}      % Primary Light #2B4C7E
+\definecolor{OceanBlue}{HTML}{0E7490}      % Secondary Teal #0E7490
+\definecolor{SlateDark}{HTML}{1E293B}      % Dark Charcoal #1E293B
+\definecolor{SlateMuted}{HTML}{64748B}     % Muted Gray #64748B
+\definecolor{AmberAccent}{HTML}{D97706}    % Amber Alert #D97706
+\definecolor{EmeraldGreen}{HTML}{059669}   % Green Success #059669
+\definecolor{CardBg}{HTML}{F8FAFC}         % Card Background #F8FAFC
+\definecolor{PhoneBg}{HTML}{0F172A}        % Phone Dark Background #0F172A
+\definecolor{BorderGray}{HTML}{CBD5E1}     % Border Gray #CBD5E1
+\definecolor{SkyBlue}{HTML}{38BDF8}        % Sky Blue #38BDF8
+
+% =============================================================================
+% TYPOGRAPHY & HEADINGS
+% =============================================================================
+\titleformat{\section}
+  {\Large\bfseries\color{DeepNavy}}
+  {\thesection}{0.8em}{}[\titlerule]
+
+\titleformat{\subsection}
+  {\large\bfseries\color{OceanBlue}}
+  {\thesubsection}{0.8em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\color{SlateDark}}
+  {\thesubsubsection}{0.8em}{}
+
+\titlespacing*{\section}{0pt}{14pt plus 2pt minus 2pt}{6pt plus 2pt minus 2pt}
+\titlespacing*{\subsection}{0pt}{10pt plus 2pt minus 2pt}{4pt plus 2pt minus 2pt}
+\titlespacing*{\subsubsection}{0pt}{6pt plus 2pt minus 2pt}{3pt plus 2pt minus 2pt}
+
+% =============================================================================
+% HEADER & FOOTER
+% =============================================================================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{SlateMuted}\textsf{K \& A Weather --- Official User Manual \& Testing Guide}}
+\fancyhead[R]{\small\color{SlateMuted}\textsf{v1.0.0 Release}}
+\fancyfoot[L]{\small\color{SlateMuted}\textsf{K \& A Weather Mobile Application}}
+\fancyfoot[R]{\small\color{SlateMuted}\textsf{Page \thepage\ of \pageref{LastPage}}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% =============================================================================
+% CUSTOM CALLOUT BOXES
+% =============================================================================
+\newtcolorbox{tipbox}[1][Pro Tip]{
+  enhanced,
+  breakable,
+  colback=CardBg,
+  colframe=OceanBlue,
+  coltitle=white,
+  fonttitle=\bfseries\small\sffamily,
+  title={#1},
+  arc=3mm,
+  boxrule=1pt,
+  left=10pt,
+  right=10pt,
+  top=6pt,
+  bottom=6pt,
+  boxsep=2pt
+}
+
+\newtcolorbox{alertbox}[1][Important Note]{
+  enhanced,
+  breakable,
+  colback=CardBg,
+  colframe=AmberAccent,
+  coltitle=white,
+  fonttitle=\bfseries\small\sffamily,
+  title={#1},
+  arc=3mm,
+  boxrule=1pt,
+  left=10pt,
+  right=10pt,
+  top=6pt,
+  bottom=6pt,
+  boxsep=2pt
+}
+
+% =============================================================================
+% DOCUMENT START
+% =============================================================================
+\begin{document}
+
+% -----------------------------------------------------------------------------
+% COVER HEADER
+% -----------------------------------------------------------------------------
+\begin{tcolorbox}[
+  enhanced,
+  colback=DeepNavy,
+  colframe=DeepNavy,
+  arc=4mm,
+  boxrule=0pt,
+  left=16pt,
+  right=16pt,
+  top=20pt,
+  bottom=20pt,
+  halign=center
+]
+  {\huge\bfseries\color{white} K \& A Weather Application}\\[6pt]
+  {\Large\itshape\color{CardBg} Complete Illustrated User Manual \& Testing Guide}\\[8pt]
+  {\small\color{BorderGray} Version 1.0.0 \ $\bullet$ \ Target Platform: Android \& iOS \ $\bullet$ \ Classmate Evaluation Guide}
+\end{tcolorbox}
+
+\vspace{0.8em}
+
+\noindent
+\begin{tabularx}{\textwidth}{@{} X X @{}}
+\toprule
+\textbf{Document Type:} User Manual \& Testing Guide & \textbf{Release Date:} October 2026 \\
+\textbf{Authors / Engineering:} Kagere \& Anthony Dev & \textbf{App Size:} Optimized $\sim$25MB Standalone APK \\
+\textbf{Architecture:} React Native $\bullet$ Expo SDK 54 & \textbf{Deployment:} Continuous Over-The-Air (OTA) Updates \\
+\bottomrule
+\end{tabularx}
+
+\vspace{1em}
+
+\begin{tipbox}[Welcome to K \& A Weather!]
+This manual provides an in-depth walkthrough of all user interface components, weather intelligence cards, biometeorological health indices, and testing flows. All UI screenshots and smartphone screen diagrams are self-contained in this document. Share this guide with your classmates to evaluate the app's performance.
+\end{tipbox}
+
+\vspace{0.5em}
+\tableofcontents
+\vspace{1em}
+\newpage
+
+% -----------------------------------------------------------------------------
+% SECTION 1: DASHBOARD OVERVIEW & NAVIGATION
+% -----------------------------------------------------------------------------
+\section{Getting Started \& Main Dashboard Overview}
+
+When you launch \textbf{K \& A Weather}, the application hydrates your cached weather snapshot in under \textbf{50ms} before seamlessly fetching live global meteorological data from Open-Meteo supercomputers in the background.
+
+\subsection{Top Navigation Bar \& Controls}
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+  \item \textbf{Global Search Bar}: Type any city, municipality, campus, or airport worldwide with instant autocomplete suggestions.
+  \item \textbf{GPS Locate Pin}: Queries on-device GPS hardware for pinpoint neighborhood weather telemetry.
+  \item \textbf{Social Share Card}: Generates an exportable, high-definition weather graphic card complete with local background photography.
+  \item \textbf{Compare Matrix}: Displays side-by-side weather comparisons across saved cities.
+  \item \textbf{Settings Toggle}: Switch between Celsius ($^\circ\text{C}$) and Fahrenheit ($^\circ\text{F}$) and check update status.
+\end{itemize}
+
+% FIGURE 1: PHONE MOCKUP FOR DASHBOARD
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.92, every node/.style={transform shape}]
+  % Phone Frame
+  \draw[fill=PhoneBg, draw=DeepNavy, line width=1.5pt, rounded corners=6mm] (0,0) rectangle (7.2, 10.5);
+  % Notch / Speaker
+  \draw[fill=SlateDark, draw=none, rounded corners=1.5mm] (2.7, 10.2) rectangle (4.5, 10.35);
+  \fill[SlateMuted] (5.8, 10.25) circle (1.2pt);
+  
+  % Status Bar
+  \node[anchor=west, text=white, font=\tiny\sffamily] at (0.4, 9.9) {09:41 AM};
+  \node[anchor=east, text=white, font=\tiny\sffamily] at (6.8, 9.9) {5G \ $\bullet$ \ 100\%};
+
+  % Floating Search Bar
+  \draw[fill=white!15, draw=white!30, rounded corners=3mm] (0.5, 8.9) rectangle (6.7, 9.6);
+  \node[anchor=west, text=white, font=\small\sffamily] at (0.8, 9.25) {\textbf{\tiny SEARCH} \ Kampala, Uganda};
+  \node[anchor=east, text=SkyBlue, font=\tiny\sffamily] at (6.4, 9.25) {GPS $\odot$};
+
+  % Hero Weather Card
+  \draw[fill=NavyLight!40, draw=SkyBlue!40, rounded corners=4mm] (0.5, 5.5) rectangle (6.7, 8.6);
+  \node[anchor=west, text=white, font=\footnotesize\sffamily\bfseries] at (0.8, 8.2) {Kampala, Central Region};
+  \node[anchor=west, text=white!70, font=\tiny\sffamily] at (0.8, 7.85) {Updated Just Now $\bullet$ Partly Cloudy};
+  \node[anchor=west, text=white, font=\Huge\sffamily\bfseries] at (0.8, 6.7) {24$^\circ$};
+  \node[anchor=west, text=SkyBlue, font=\small\sffamily] at (2.6, 6.7) {C};
+  \node[anchor=west, text=white!80, font=\tiny\sffamily] at (0.8, 5.9) {Real-Feel: 26$^\circ$C \ $\bullet$ \ H: 28$^\circ$ \ L: 18$^\circ$};
+  \node[anchor=east, text=AmberAccent, font=\Large\sffamily] at (6.4, 7.1) {⛅};
+
+  % Hourly Forecast Bar Card
+  \draw[fill=white!10, draw=white!20, rounded corners=3mm] (0.5, 3.7) rectangle (6.7, 5.2);
+  \node[anchor=west, text=SkyBlue, font=\tiny\sffamily\bfseries] at (0.7, 4.9) {24-HOUR HOURLY OUTLOOK};
+  
+  % Hourly items
+  \draw[fill=white!15, rounded corners=2mm] (0.7, 3.9) rectangle (1.9, 4.65);
+  \node[text=white, font=\tiny\sffamily] at (1.3, 4.4) {Now};
+  \node[text=SkyBlue, font=\tiny\sffamily\bfseries] at (1.3, 4.1) {24$^\circ$};
+
+  \draw[fill=white!15, rounded corners=2mm] (2.1, 3.9) rectangle (3.3, 4.65);
+  \node[text=white, font=\tiny\sffamily] at (2.7, 4.4) {11:00};
+  \node[text=SkyBlue, font=\tiny\sffamily\bfseries] at (2.7, 4.1) {26$^\circ$};
+
+  \draw[fill=white!15, rounded corners=2mm] (3.5, 3.9) rectangle (4.7, 4.65);
+  \node[text=white, font=\tiny\sffamily] at (4.1, 4.4) {12:00};
+  \node[text=SkyBlue, font=\tiny\sffamily\bfseries] at (4.1, 4.1) {28$^\circ$};
+
+  \draw[fill=white!15, rounded corners=2mm] (4.9, 3.9) rectangle (6.1, 4.65);
+  \node[text=white, font=\tiny\sffamily] at (5.5, 4.4) {13:00};
+  \node[text=SkyBlue, font=\tiny\sffamily\bfseries] at (5.5, 4.1) {27$^\circ$};
+
+  % Quick Stats Grid
+  \draw[fill=white!10, draw=white!20, rounded corners=2.5mm] (0.5, 2.1) rectangle (3.4, 3.4);
+  \node[anchor=west, text=white!70, font=\tiny\sffamily] at (0.7, 3.1) {HUMIDITY};
+  \node[anchor=west, text=white, font=\small\sffamily\bfseries] at (0.7, 2.6) {68\%};
+  \node[anchor=west, text=EmeraldGreen, font=\tiny\sffamily] at (0.7, 2.3) {Normal};
+
+  \draw[fill=white!10, draw=white!20, rounded corners=2.5mm] (3.8, 2.1) rectangle (6.7, 3.4);
+  \node[anchor=west, text=white!70, font=\tiny\sffamily] at (4.0, 3.1) {WIND SPEED};
+  \node[anchor=west, text=white, font=\small\sffamily\bfseries] at (4.0, 2.6) {12 km/h};
+  \node[anchor=west, text=SkyBlue, font=\tiny\sffamily] at (4.0, 2.3) {SSW $\cdot$ Gentle};
+
+  % Bottom Action Icons
+  \draw[fill=DeepNavy, draw=white!20, rounded corners=3mm] (0.5, 0.5) rectangle (6.7, 1.7);
+  \node[text=white, font=\tiny\sffamily] at (1.5, 1.1) {📊 Matrix};
+  \node[text=white, font=\tiny\sffamily] at (3.6, 1.1) {📡 Radar};
+  \node[text=white, font=\tiny\sffamily] at (5.7, 1.1) {🎵 Audio};
+
+  % Home Bar
+  \draw[fill=white!60, rounded corners=1mm] (2.6, 0.2) rectangle (4.6, 0.3);
+\end{tikzpicture}
+\caption{Figure 1: Main Application Dashboard with Hero Card, Hourly Bar, and Navigation Controls.}
+\end{figure}
+
+% -----------------------------------------------------------------------------
+% SECTION 2: INTELLIGENCE & MORNING BRIEFINGS
+% -----------------------------------------------------------------------------
+\section{Intelligence, AI Narrative \& Morning Briefings}
+
+\subsection{AI Weather Narrative Engine}
+The \textbf{Weather Narrative} card summarizes the day's conditions in natural language. It calculates historical delta changes comparing today's temperature and humidity directly to yesterday.
+
+\subsection{12-Hour AM/PM Morning Briefing Scheduler}
+Users can schedule custom morning push notifications with full 12-hour AM/PM control:
+\begin{enumerate}[leftmargin=1.5em, itemsep=2pt]
+  \item Tap the \textbf{Schedule Briefing} clock button on the Weather Narrative card.
+  \item Set your desired delivery time (e.g. \texttt{07:30} or \texttt{08:15}).
+  \item Toggle between \textbf{AM} (morning alerts) and \textbf{PM} (evening recaps).
+  \item Tap \textbf{Save Preferences}. The app configures autonomous on-device push delivery.
+\end{enumerate}
+
+% FIGURE 2: NARRATIVE CARD WITH AM/PM PICKER MOCKUP
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.92, every node/.style={transform shape}]
+  % Card Frame
+  \draw[fill=CardBg, draw=OceanBlue, line width=1.2pt, rounded corners=4mm] (0,0) rectangle (7.5, 5.6);
+  
+  % Header
+  \draw[fill=DeepNavy, rounded corners=3mm] (0.2, 4.6) rectangle (7.3, 5.4);
+  \node[anchor=west, text=white, font=\small\sffamily\bfseries] at (0.5, 5.0) {🌅 Daily Weather Briefing \& AI Narrative};
+  \node[anchor=east, text=AmberAccent, font=\tiny\sffamily] at (7.0, 5.0) {Active};
+
+  % Narrative Text Box
+  \draw[fill=white, draw=BorderGray, rounded corners=2.5mm] (0.3, 2.7) rectangle (7.2, 4.4);
+  \node[anchor=north west, text=SlateDark, font=\scriptsize\sffamily, text width=6.5cm, align=left] at (0.5, 4.25) {
+    \textbf{Good Morning!} Today will be \textbf{3$^\circ$C warmer} than yesterday with clear skies throughout the afternoon. Humidity remains comfortable at 65\%. UV index peaks at 8 around 1:00 PM—remember sunscreen!
+  };
+
+  % Time Picker & AM/PM Controls
+  \draw[fill=white, draw=OceanBlue!50, rounded corners=2.5mm] (0.3, 0.4) rectangle (7.2, 2.4);
+  \node[anchor=west, text=DeepNavy, font=\scriptsize\sffamily\bfseries] at (0.5, 2.05) {⏰ Morning Notification Schedule:};
+
+  % Time Display Box
+  \draw[fill=CardBg, draw=BorderGray, rounded corners=2mm] (0.6, 0.7) rectangle (2.8, 1.7);
+  \node[text=DeepNavy, font=\large\sffamily\bfseries] at (1.7, 1.2) {07:30};
+
+  % AM/PM Selector Buttons
+  \draw[fill=OceanBlue, rounded corners=2mm] (3.1, 0.7) rectangle (4.2, 1.7);
+  \node[text=white, font=\small\sffamily\bfseries] at (3.65, 1.2) {AM};
+
+  \draw[fill=BorderGray!40, draw=BorderGray, rounded corners=2mm] (4.4, 0.7) rectangle (5.5, 1.7);
+  \node[text=SlateMuted, font=\small\sffamily] at (4.95, 1.2) {PM};
+
+  % Save Button
+  \draw[fill=EmeraldGreen, rounded corners=2mm] (5.7, 0.7) rectangle (7.0, 1.7);
+  \node[text=white, font=\scriptsize\sffamily\bfseries] at (6.35, 1.2) {Save};
+\end{tikzpicture}
+\caption{Figure 2: AI Weather Narrative Card with Configurable 12-Hour AM/PM Morning Briefing Scheduler.}
+\end{figure}
+
+% -----------------------------------------------------------------------------
+% SECTION 3: CELESTIAL ARC & BIOMETEOROLOGY
+% -----------------------------------------------------------------------------
+\section{Celestial Arc \& Biometeorological Health Hub}
+
+\subsection{Celestial Arc --- Sun \& Moon Horizon Tracker}
+Visualizes the parabolic curve of the sun and moon in real time, highlighting Dawn, Sunrise, Golden Hour, Solar Noon, Peak UV, Sunset, and Moon Phase.
+
+\subsection{Biometeorology & Atmospheric Health Parameters}
+Tracks invisible atmospheric factors affecting health and environmental comfort:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{} l p{5.5cm} p{7cm} @{}}
+\toprule
+\textbf{Index} & \textbf{Parameters Tracked} & \textbf{Health Guidance \& Significance} \\
+\midrule
+\textbf{Pollen \& Allergy} & Grass, Birch, Weed, Olive counts & Warns allergy \& asthma sufferers before outdoor exposure. \\
+\addlinespace
+\textbf{Joint Pain} & Barometric pressure drop ($\Delta P$) + humidity & Alerts arthritis sufferers when low pressure expands tissues. \\
+\addlinespace
+\textbf{Migraine Risk} & Sudden barometric pressure swings & Flags volatility known to trigger vascular headaches. \\
+\addlinespace
+\textbf{UV Radiation} & Solar UV index (0--12+) & Calculates safe unprotected sun time; recommends SPF30+/50+. \\
+\addlinespace
+\textbf{Air Quality (AQI)} & $\text{PM}_{2.5}$, $\text{PM}_{10}$, $\text{O}_3$, $\text{NO}_2$, $\text{SO}_2$ & European standard AQI with health advisory levels. \\
+\bottomrule
+\end{tabularx}
+\caption{Biometeorological Health Index Matrix.}
+\end{table}
+
+% FIGURE 3: BIOMETEOROLOGY & CELESTIAL ARC MOCKUP
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.92, every node/.style={transform shape}]
+  % Frame
+  \draw[fill=CardBg, draw=BorderGray, rounded corners=4mm] (0,0) rectangle (7.5, 4.8);
+  
+  % Celestial Arc Top Half
+  \node[anchor=west, text=DeepNavy, font=\small\sffamily\bfseries] at (0.4, 4.4) {☀️ Celestial Horizon Arc};
+  \draw[thick, SkyBlue!40, dashed] (0.8, 3.1) arc (160:20:3.2cm);
+  
+  % Sun Position
+  \fill[AmberAccent] (3.8, 3.8) circle (5pt);
+  \node[text=AmberAccent, font=\tiny\sffamily\bfseries] at (3.8, 4.2) {Solar Noon 12:45};
+
+  \node[text=SlateMuted, font=\tiny\sffamily] at (0.8, 2.9) {Sunrise 06:40};
+  \node[text=SlateMuted, font=\tiny\sffamily] at (6.7, 2.9) {Sunset 18:50};
+
+  % Biometeorology 3-Card Row
+  \draw[fill=white, draw=BorderGray, rounded corners=2mm] (0.4, 0.4) rectangle (2.5, 2.4);
+  \node[anchor=west, text=EmeraldGreen, font=\tiny\sffamily\bfseries] at (0.5, 2.1) {🌸 POLLEN};
+  \node[anchor=west, text=DeepNavy, font=\normalsize\sffamily\bfseries] at (0.5, 1.4) {Low};
+  \node[anchor=west, text=SlateMuted, font=\tiny\sffamily] at (0.5, 0.8) {Grass: 12 gr/m$^3$};
+
+  \draw[fill=white, draw=BorderGray, rounded corners=2mm] (2.7, 0.4) rectangle (4.8, 2.4);
+  \node[anchor=west, text=AmberAccent, font=\tiny\sffamily\bfseries] at (2.8, 2.1) {🦴 JOINT PAIN};
+  \node[anchor=west, text=DeepNavy, font=\normalsize\sffamily\bfseries] at (2.8, 1.4) {Moderate};
+  \node[anchor=west, text=SlateMuted, font=\tiny\sffamily] at (2.8, 0.8) {$\Delta P$: $-2.1$\,hPa};
+
+  \draw[fill=white, draw=BorderGray, rounded corners=2mm] (5.0, 0.4) rectangle (7.1, 2.4);
+  \node[anchor=west, text=SkyBlue, font=\tiny\sffamily\bfseries] at (5.1, 2.1) {🍃 AIR QUALITY};
+  \node[anchor=west, text=DeepNavy, font=\normalsize\sffamily\bfseries] at (5.1, 1.4) {AQI 42};
+  \node[anchor=west, text=EmeraldGreen, font=\tiny\sffamily] at (5.1, 0.8) {Good (PM2.5: 8)};
+\end{tikzpicture}
+\caption{Figure 3: Celestial Horizon Arc Tracker and Biometeorological Health Cards.}
+\end{figure}
+
+% -----------------------------------------------------------------------------
+% SECTION 4: LIFESTYLE & 48-HOUR TIME TRAVEL
+% -----------------------------------------------------------------------------
+\section{Lifestyle Indices \& 48-Hour Time Travel Scrubbing}
+
+\subsection{Lifestyle Activity Suitability Matrix}
+Scores six everyday activities from $0\text{--}100\%$:
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+  \item \textbf{Running \& Jogging}: Calculated from thermal comfort, humidity, and $\text{PM}_{2.5}$ air quality.
+  \item \textbf{Cycling \& Biking}: Evaluates wind speed, headwind gusts, and road wetness.
+  \item \textbf{Stargazing \& Astronomy}: Evaluates night cloud coverage ($<15\%$) and moon phase.
+  \item \textbf{Outdoor Dining}: Assesses patio breeze, rain risk, and temperature.
+  \item \textbf{Laundry Drying}: Estimates evaporation speed based on solar radiation and wind speed.
+  \item \textbf{Car Washing}: Checks 48-hour rain probability to prevent washing before a downpour.
+\end{itemize}
+
+\subsection{48-Hour Interactive Time Travel Slider}
+Drag the horizontal slider forward up to 48 hours to preview upcoming weather. The entire dashboard dynamically updates temperature, weather icons, and lighting physics in real time!
+
+% FIGURE 4: LIFESTYLE & TIME TRAVEL MOCKUP
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.92, every node/.style={transform shape}]
+  \draw[fill=CardBg, draw=BorderGray, rounded corners=4mm] (0,0) rectangle (7.5, 4.4);
+  
+  \node[anchor=west, text=DeepNavy, font=\small\sffamily\bfseries] at (0.4, 4.0) {⏳ 48-Hour Interactive Time Travel Slider};
+  
+  % Slider Track
+  \draw[line width=4pt, BorderGray, rounded corners=2pt] (0.6, 3.2) -- (6.9, 3.2);
+  \draw[line width=4pt, OceanBlue, rounded corners=2pt] (0.6, 3.2) -- (3.8, 3.2);
+  \fill[DeepNavy] (3.8, 3.2) circle (7pt);
+  \fill[white] (3.8, 3.2) circle (3pt);
+
+  \node[text=OceanBlue, font=\tiny\sffamily\bfseries] at (0.6, 2.7) {Now};
+  \node[text=DeepNavy, font=\tiny\sffamily\bfseries] at (3.8, 2.7) {+18 Hours (Tomorrow 03:00 AM)};
+  \node[text=SlateMuted, font=\tiny\sffamily] at (6.9, 2.7) {+48 Hours};
+
+  % Lifestyle 3 Gauges
+  \draw[fill=white, draw=BorderGray, rounded corners=2mm] (0.4, 0.4) rectangle (2.5, 2.2);
+  \node[anchor=west, text=DeepNavy, font=\tiny\sffamily\bfseries] at (0.5, 1.9) {🏃 RUNNING};
+  \node[text=EmeraldGreen, font=\large\sffamily\bfseries] at (1.45, 1.2) {92\%};
+  \node[text=SlateMuted, font=\tiny\sffamily] at (1.45, 0.7) {Ideal Conditions};
+
+  \draw[fill=white, draw=BorderGray, rounded corners=2mm] (2.7, 0.4) rectangle (4.8, 2.2);
+  \node[anchor=west, text=DeepNavy, font=\tiny\sffamily\bfseries] at (2.8, 1.9) {✨ STARGAZING};
+  \node[text=SkyBlue, font=\large\sffamily\bfseries] at (3.75, 1.2) {85\%};
+  \node[text=SlateMuted, font=\tiny\sffamily] at (3.75, 0.7) {Clear Night Sky};
+
+  \draw[fill=white, draw=BorderGray, rounded corners=2mm] (5.0, 0.4) rectangle (7.1, 2.2);
+  \node[anchor=west, text=DeepNavy, font=\tiny\sffamily\bfseries] at (5.1, 1.9) {🧺 LAUNDRY};
+  \node[text=AmberAccent, font=\large\sffamily\bfseries] at (6.05, 1.2) {60\%};
+  \node[text=SlateMuted, font=\tiny\sffamily] at (6.05, 0.7) {Moderate Drying};
+\end{tikzpicture}
+\caption{Figure 4: 48-Hour Time Travel Scrubber and Lifestyle Activity Suitability Scores.}
+\end{figure}
+
+% -----------------------------------------------------------------------------
+% SECTION 5: RADAR & SOUNDSCAPES
+% -----------------------------------------------------------------------------
+\section{Interactive Radar Maps \& Ambient Soundscapes}
+
+\subsection{Multi-Layer Interactive Weather Radar}
+High-performance Leaflet-based interactive radar map with layer switching:
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+  \item \textbf{Precipitation Radar}: Real-time Doppler rain and storm tracking.
+  \item \textbf{Temperature Heatmap}: Thermal contours across continental regions.
+  \item \textbf{Wind Streamlines}: Dynamic vector streamlines illustrating wind velocity.
+  \item \textbf{Satellite Clouds}: Real-time satellite cloud cover density.
+\end{itemize}
+
+\subsection{Ambient Weather Soundscape Player}
+Streams continuous, high-fidelity ambient audio loops for study, focus, and sleep:
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+  \item Available soundscapes: \emph{Rain on Roof}, \emph{Gentle Wind}, \emph{Mountain Breeze}, \emph{Forest Birds}, and \emph{Ocean Waves}.
+  \item Background playback support with one-tap play/pause controls.
+\end{itemize}
+
+% -----------------------------------------------------------------------------
+% SECTION 6: TESTING GUIDE FOR CLASSMATES
+% -----------------------------------------------------------------------------
+\section{Classmate Evaluation \& Testing Checklist}
+
+\begin{alertbox}[Testing Instructions for Evaluators]
+Please test each feature on your Android phone and note any observations:
+\begin{enumerate}[leftmargin=1.5em, itemsep=3pt]
+  \item \textbf{Global Search \& GPS}: Test searching for your hometown/campus and tap the GPS locate button.
+  \item \textbf{Morning Briefing Scheduler}: Set a morning notification time with the 12-hour AM/PM picker and tap Save.
+  \item \textbf{48-Hour Time Travel}: Drag the time scrubber and verify that temperature, weather icons, and lighting smoothly adjust.
+  \item \textbf{Interactive Radar}: Open the radar map and switch between Precipitation, Heatmap, and Wind layers.
+  \item \textbf{Ambient Soundscapes}: Play each audio track to verify continuous background looping.
+  \item \textbf{App Size \& Performance}: Verify smooth 60fps animations and the lightweight $\sim$25MB footprint.
+\end{enumerate}
+\end{alertbox}
+
+\vspace{1.5em}
+\noindent\rule{\textwidth}{0.4pt}
+\begin{center}
+{\small\color{SlateMuted}\textsf{K \& A Weather App $\bullet$ Version 1.0.0 Release $\bullet$ Developed by Kagere \& Anthony $\bullet$ 2026}}
+\end{center}
+
+\end{document}
