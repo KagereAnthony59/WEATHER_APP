@@ -127,7 +127,7 @@
 ]
   {\huge\bfseries\color{white} K \& A Weather Application}\\[6pt]
   {\Large\itshape\color{CardBg} Complete Illustrated User Manual \& Testing Guide}\\[8pt]
-  {\small\color{BorderGray} Version 1.0.0 \ $\bullet$ \ Target Platform: Android \& iOS \ $\bullet$ \ Classmate Evaluation Guide}
+  {\small\color{BorderGray} Version 1.0.0 \ $\bullet$ \ Target Platform: Android \& iOS \ $\bullet$ \ Release Documentation}
 \end{tcolorbox}
 
 \vspace{0.8em}
@@ -136,15 +136,15 @@
 \begin{tabularx}{\textwidth}{@{} X X @{}}
 \toprule
 \textbf{Document Type:} User Manual \& Testing Guide & \textbf{Release Date:} October 2026 \\
-\textbf{Authors / Engineering:} Kagere \& Anthony Dev & \textbf{App Size:} Optimized $\sim$25MB Standalone APK \\
+\textbf{Authors / Engineering:} Kagere \& Anthony Dev & \textbf{App Size:} Super Lightweight $\sim$22--24MB Standalone APK \\
 \textbf{Architecture:} React Native $\bullet$ Expo SDK 54 & \textbf{Deployment:} Continuous Over-The-Air (OTA) Updates \\
 \bottomrule
 \end{tabularx}
 
 \vspace{1em}
 
-\begin{tipbox}[Welcome to K \& A Weather!]
-This manual provides an in-depth walkthrough of all user interface components, weather intelligence cards, biometeorological health indices, and testing flows. All UI screenshots and smartphone screen diagrams are self-contained in this document. Share this guide with your classmates to evaluate the app's performance.
+\begin{tipbox}[Welcome to K \& A Weather v1.0!]
+This manual provides an in-depth walkthrough of all user interface components, weather intelligence cards, biometeorological health indices, and testing flows. All UI screenshots and smartphone screen diagrams are self-contained in this document with zero external image dependencies.
 \end{tipbox}
 
 \vspace{0.5em}
@@ -165,7 +165,7 @@ When you launch \textbf{K \& A Weather}, the application hydrates your cached we
   \item \textbf{GPS Locate Pin}: Queries on-device GPS hardware for pinpoint neighborhood weather telemetry.
   \item \textbf{Social Share Card}: Generates an exportable, high-definition weather graphic card complete with local background photography.
   \item \textbf{Compare Matrix}: Displays side-by-side weather comparisons across saved cities.
-  \item \textbf{Settings Toggle}: Switch between Celsius ($^\circ\text{C}$) and Fahrenheit ($^\circ\text{F}$) and check update status.
+  \item \textbf{Settings Toggle}: Switch between Celsius ($^\circ\text{C}$) and Fahrenheit ($^\circ\text{F}$), 12h/24h time format, and check system telemetry.
 \end{itemize}
 
 % FIGURE 1: PHONE MOCKUP FOR DASHBOARD
@@ -241,60 +241,31 @@ When you launch \textbf{K \& A Weather}, the application hydrates your cached we
 \end{figure}
 
 % -----------------------------------------------------------------------------
-% SECTION 2: INTELLIGENCE & MORNING BRIEFINGS
+% SECTION 2: INTELLIGENCE & AI NARRATIVE
 % -----------------------------------------------------------------------------
-\section{Intelligence, AI Narrative \& Morning Briefings}
+\section{Intelligence \& AI Weather Briefings}
 
 \subsection{AI Weather Narrative Engine}
 The \textbf{Weather Narrative} card summarizes the day's conditions in natural language. It calculates historical delta changes comparing today's temperature and humidity directly to yesterday.
 
-\subsection{12-Hour AM/PM Morning Briefing Scheduler}
-Users can schedule custom morning push notifications with full 12-hour AM/PM control:
-\begin{enumerate}[leftmargin=1.5em, itemsep=2pt]
-  \item Tap the \textbf{Schedule Briefing} clock button on the Weather Narrative card.
-  \item Set your desired delivery time (e.g. \texttt{07:30} or \texttt{08:15}).
-  \item Toggle between \textbf{AM} (morning alerts) and \textbf{PM} (evening recaps).
-  \item Tap \textbf{Save Preferences}. The app configures autonomous on-device push delivery.
-\end{enumerate}
-
-% FIGURE 2: NARRATIVE CARD WITH AM/PM PICKER MOCKUP
+% FIGURE 2: NARRATIVE CARD
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[scale=0.92, every node/.style={transform shape}]
   % Card Frame
-  \draw[fill=CardBg, draw=OceanBlue, line width=1.2pt, rounded corners=4mm] (0,0) rectangle (7.5, 5.6);
+  \draw[fill=CardBg, draw=OceanBlue, line width=1.2pt, rounded corners=4mm] (0,0) rectangle (7.5, 3.2);
   
   % Header
-  \draw[fill=DeepNavy, rounded corners=3mm] (0.2, 4.6) rectangle (7.3, 5.4);
-  \node[anchor=west, text=white, font=\small\sffamily\bfseries] at (0.5, 5.0) {🌅 Daily Weather Briefing \& AI Narrative};
-  \node[anchor=east, text=AmberAccent, font=\tiny\sffamily] at (7.0, 5.0) {Active};
+  \draw[fill=DeepNavy, rounded corners=3mm] (0.2, 2.2) rectangle (7.3, 3.0);
+  \node[anchor=west, text=white, font=\small\sffamily\bfseries] at (0.5, 2.6) {🌅 Daily Weather Briefing \& AI Narrative};
 
   % Narrative Text Box
-  \draw[fill=white, draw=BorderGray, rounded corners=2.5mm] (0.3, 2.7) rectangle (7.2, 4.4);
-  \node[anchor=north west, text=SlateDark, font=\scriptsize\sffamily, text width=6.5cm, align=left] at (0.5, 4.25) {
+  \draw[fill=white, draw=BorderGray, rounded corners=2.5mm] (0.3, 0.3) rectangle (7.2, 2.0);
+  \node[anchor=north west, text=SlateDark, font=\scriptsize\sffamily, text width=6.5cm, align=left] at (0.5, 1.85) {
     \textbf{Good Morning!} Today will be \textbf{3$^\circ$C warmer} than yesterday with clear skies throughout the afternoon. Humidity remains comfortable at 65\%. UV index peaks at 8 around 1:00 PM—remember sunscreen!
   };
-
-  % Time Picker & AM/PM Controls
-  \draw[fill=white, draw=OceanBlue!50, rounded corners=2.5mm] (0.3, 0.4) rectangle (7.2, 2.4);
-  \node[anchor=west, text=DeepNavy, font=\scriptsize\sffamily\bfseries] at (0.5, 2.05) {⏰ Morning Notification Schedule:};
-
-  % Time Display Box
-  \draw[fill=CardBg, draw=BorderGray, rounded corners=2mm] (0.6, 0.7) rectangle (2.8, 1.7);
-  \node[text=DeepNavy, font=\large\sffamily\bfseries] at (1.7, 1.2) {07:30};
-
-  % AM/PM Selector Buttons
-  \draw[fill=OceanBlue, rounded corners=2mm] (3.1, 0.7) rectangle (4.2, 1.7);
-  \node[text=white, font=\small\sffamily\bfseries] at (3.65, 1.2) {AM};
-
-  \draw[fill=BorderGray!40, draw=BorderGray, rounded corners=2mm] (4.4, 0.7) rectangle (5.5, 1.7);
-  \node[text=SlateMuted, font=\small\sffamily] at (4.95, 1.2) {PM};
-
-  % Save Button
-  \draw[fill=EmeraldGreen, rounded corners=2mm] (5.7, 0.7) rectangle (7.0, 1.7);
-  \node[text=white, font=\scriptsize\sffamily\bfseries] at (6.35, 1.2) {Save};
 \end{tikzpicture}
-\caption{Figure 2: AI Weather Narrative Card with Configurable 12-Hour AM/PM Morning Briefing Scheduler.}
+\caption{Figure 2: AI Weather Narrative Card with Day-over-Day Comparison Insights.}
 \end{figure}
 
 % -----------------------------------------------------------------------------
@@ -315,15 +286,13 @@ Tracks invisible atmospheric factors affecting health and environmental comfort:
 \toprule
 \textbf{Index} & \textbf{Parameters Tracked} & \textbf{Health Guidance \& Significance} \\
 \midrule
-\textbf{Pollen \& Allergy} & Grass, Birch, Weed, Olive counts & Warns allergy \& asthma sufferers before outdoor exposure. \\
+\textbf{Air Quality (AQI)} & $\text{PM}_{2.5}$, $\text{PM}_{10}$, $\text{O}_3$, $\text{NO}_2$ & US standard AQI rating with detailed particulate breakdowns. \\
 \addlinespace
-\textbf{Joint Pain} & Barometric pressure drop ($\Delta P$) + humidity & Alerts arthritis sufferers when low pressure expands tissues. \\
+\textbf{Joint Pain} & Barometric pressure drop ($\Delta P$) + humidity & Alerts arthritis sufferers when low pressure expands joint tissues. \\
 \addlinespace
-\textbf{Migraine Risk} & Sudden barometric pressure swings & Flags volatility known to trigger vascular headaches. \\
+\textbf{Migraine Risk} & Sudden barometric pressure swings & Flags rapid atmospheric volatility that triggers vascular headaches. \\
 \addlinespace
 \textbf{UV Radiation} & Solar UV index (0--12+) & Calculates safe unprotected sun time; recommends SPF30+/50+. \\
-\addlinespace
-\textbf{Air Quality (AQI)} & $\text{PM}_{2.5}$, $\text{PM}_{10}$, $\text{O}_3$, $\text{NO}_2$, $\text{SO}_2$ & European standard AQI with health advisory levels. \\
 \bottomrule
 \end{tabularx}
 \caption{Biometeorological Health Index Matrix.}
@@ -349,9 +318,9 @@ Tracks invisible atmospheric factors affecting health and environmental comfort:
 
   % Biometeorology 3-Card Row
   \draw[fill=white, draw=BorderGray, rounded corners=2mm] (0.4, 0.4) rectangle (2.5, 2.4);
-  \node[anchor=west, text=EmeraldGreen, font=\tiny\sffamily\bfseries] at (0.5, 2.1) {🌸 POLLEN};
-  \node[anchor=west, text=DeepNavy, font=\normalsize\sffamily\bfseries] at (0.5, 1.4) {Low};
-  \node[anchor=west, text=SlateMuted, font=\tiny\sffamily] at (0.5, 0.8) {Grass: 12 gr/m$^3$};
+  \node[anchor=west, text=SkyBlue, font=\tiny\sffamily\bfseries] at (0.5, 2.1) {🍃 AIR QUALITY};
+  \node[anchor=west, text=DeepNavy, font=\normalsize\sffamily\bfseries] at (0.5, 1.4) {AQI 42};
+  \node[anchor=west, text=EmeraldGreen, font=\tiny\sffamily] at (0.5, 0.8) {Good (PM2.5: 8)};
 
   \draw[fill=white, draw=BorderGray, rounded corners=2mm] (2.7, 0.4) rectangle (4.8, 2.4);
   \node[anchor=west, text=AmberAccent, font=\tiny\sffamily\bfseries] at (2.8, 2.1) {🦴 JOINT PAIN};
@@ -359,11 +328,11 @@ Tracks invisible atmospheric factors affecting health and environmental comfort:
   \node[anchor=west, text=SlateMuted, font=\tiny\sffamily] at (2.8, 0.8) {$\Delta P$: $-2.1$\,hPa};
 
   \draw[fill=white, draw=BorderGray, rounded corners=2mm] (5.0, 0.4) rectangle (7.1, 2.4);
-  \node[anchor=west, text=SkyBlue, font=\tiny\sffamily\bfseries] at (5.1, 2.1) {🍃 AIR QUALITY};
-  \node[anchor=west, text=DeepNavy, font=\normalsize\sffamily\bfseries] at (5.1, 1.4) {AQI 42};
-  \node[anchor=west, text=EmeraldGreen, font=\tiny\sffamily] at (5.1, 0.8) {Good (PM2.5: 8)};
+  \node[anchor=west, text=EmeraldGreen, font=\tiny\sffamily\bfseries] at (5.1, 2.1) {⚡ MIGRAINE};
+  \node[anchor=west, text=DeepNavy, font=\normalsize\sffamily\bfseries] at (5.1, 1.4) {Low Risk};
+  \node[anchor=west, text=SlateMuted, font=\tiny\sffamily] at (5.1, 0.8) {Stable Barometer};
 \end{tikzpicture}
-\caption{Figure 3: Celestial Horizon Arc Tracker and Biometeorological Health Cards.}
+\caption{Figure 3: Celestial Horizon Arc Tracker and Air Quality / Health Cards.}
 \end{figure}
 
 % -----------------------------------------------------------------------------
@@ -425,15 +394,15 @@ Drag the horizontal slider forward up to 48 hours to preview upcoming weather. T
 % -----------------------------------------------------------------------------
 % SECTION 5: RADAR & SOUNDSCAPES
 % -----------------------------------------------------------------------------
-\section{Interactive Radar Maps \& Ambient Soundscapes}
+\section{Interactive Keyless Radar Maps \& Ambient Soundscapes}
 
-\subsection{Multi-Layer Interactive Weather Radar}
-High-performance Leaflet-based interactive radar map with layer switching:
+\subsection{Keyless Multi-Layer Interactive Weather Radar}
+High-performance Leaflet-based interactive radar map with zero API keys required:
 \begin{itemize}[leftmargin=1.5em, itemsep=2pt]
-  \item \textbf{Precipitation Radar}: Real-time Doppler rain and storm tracking.
-  \item \textbf{Temperature Heatmap}: Thermal contours across continental regions.
-  \item \textbf{Wind Streamlines}: Dynamic vector streamlines illustrating wind velocity.
-  \item \textbf{Satellite Clouds}: Real-time satellite cloud cover density.
+  \item \textbf{Esri Dark Canvas}: Watermark-free, high-performance dark theme with country and city border references.
+  \item \textbf{OpenStreetMap}: Clean vector street map tiles.
+  \item \textbf{High-Resolution Satellite}: High-definition orbital satellite imagery.
+  \item \textbf{Interactive Spotter Mode}: Tap anywhere on the globe to inspect real-time localized temperature, wind, and humidity.
 \end{itemize}
 
 \subsection{Ambient Weather Soundscape Player}
@@ -452,11 +421,10 @@ Streams continuous, high-fidelity ambient audio loops for study, focus, and slee
 Please test each feature on your Android phone and note any observations:
 \begin{enumerate}[leftmargin=1.5em, itemsep=3pt]
   \item \textbf{Global Search \& GPS}: Test searching for your hometown/campus and tap the GPS locate button.
-  \item \textbf{Morning Briefing Scheduler}: Set a morning notification time with the 12-hour AM/PM picker and tap Save.
   \item \textbf{48-Hour Time Travel}: Drag the time scrubber and verify that temperature, weather icons, and lighting smoothly adjust.
-  \item \textbf{Interactive Radar}: Open the radar map and switch between Precipitation, Heatmap, and Wind layers.
+  \item \textbf{Interactive Radar}: Open the radar map, toggle Dark/Satellite layers, and tap on the map in Spotter mode.
   \item \textbf{Ambient Soundscapes}: Play each audio track to verify continuous background looping.
-  \item \textbf{App Size \& Performance}: Verify smooth 60fps animations and the lightweight $\sim$25MB footprint.
+  \item \textbf{App Size \& Performance}: Verify smooth 60fps animations and the lightweight $\sim$22--24MB footprint.
 \end{enumerate}
 \end{alertbox}
 

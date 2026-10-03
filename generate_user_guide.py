@@ -116,11 +116,11 @@ def create_user_guide():
     # -------------------------------------------------------------
     # DOCUMENT COVER & OVERVIEW
     # -------------------------------------------------------------
-    add_title("K & A Weather App — User Guide")
-    add_subtitle("Comprehensive Walkthrough, Biometeorology, Commute Safety, Features & Updates")
+    add_title("K & A Weather App — User Guide (v1.0)")
+    add_subtitle("Comprehensive Walkthrough, Biometeorology, 48-Hour Time Travel, Features & Updates")
 
     add_tip_box(
-        "Welcome to K & A Weather! This illustrated guide walks you through every feature of the application—from real-time weather forecasts and biometeorological health indices to driving safety analyses, 48-hour time travel, ambient soundscapes, and automatic Over-The-Air updates.",
+        "Welcome to K & A Weather v1.0! This guide walks you through every feature of the application—from real-time weather forecasts and biometeorological health indices to 48-hour time travel, keyless radar maps, ambient soundscapes, and automatic Over-The-Air updates.",
         "WELCOME"
     )
 
@@ -130,7 +130,7 @@ def create_user_guide():
     add_heading_1("1. Getting Started & Dashboard Overview")
     p = doc.add_paragraph()
     p.add_run(
-        "When you launch K & A Weather, the app instantly hydrates your last-viewed location in under 50ms before seamlessly refreshing with the latest global satellite and meteorological data. "
+        "When you launch K & A Weather, the app instantly hydrates your last-viewed location in under 50ms before seamlessly refreshing with the latest global meteorological data from Open-Meteo supercomputers. "
         "The interface adapts dynamically with glassmorphic styling, condition-matched backgrounds, and smooth physics-driven particle animations."
     )
 
@@ -138,35 +138,19 @@ def create_user_guide():
     add_bullet("Type any city, town, university campus, or region globally. Real-time autocomplete suggestions appear instantly.", "🔍 Search Bar: ")
     add_bullet("Instantly query your device's GPS hardware to fetch local weather for your exact location.", "📍 Current Location Button: ")
     add_bullet("Generate and share a beautiful weather graphic card to social media, messaging apps, or email.", "📤 Share Card Button: ")
-    add_bullet("Open app settings to toggle between Celsius (°C) and Fahrenheit (°F) and review app version details.", "⚙️ Settings Button: ")
+    add_bullet("Open app settings to toggle between Celsius (°C) and Fahrenheit (°F), 12h/24h time, and review app telemetry.", "⚙️ Settings Button: ")
     add_bullet("Open the side-by-side comparison matrix for your saved cities.", "📊 Compare Button: ")
 
     # -------------------------------------------------------------
-    # 2. INTELLIGENCE & ADVISORY SUITE
+    # 2. INTELLIGENCE & DAILY GUIDANCE
     # -------------------------------------------------------------
-    add_heading_1("2. Intelligence, Wisdom & Daily Guidance")
+    add_heading_1("2. Intelligence & AI Weather Briefings")
 
-    add_heading_2("AI Weather Narrative & Morning Briefings")
+    add_heading_2("AI Weather Narrative")
     p = doc.add_paragraph()
     p.add_run(
-        "Located right below the top navigation, the Weather Narrative card delivers a natural-language contextual summary of the day. "
+        "Located at the top of the dashboard, the Weather Narrative card delivers a natural-language contextual summary of the day. "
         "It automatically tailors messages for morning, afternoon, evening, and night, comparing today's temperature and humidity directly to yesterday so you know exactly what changed."
-    )
-
-    add_heading_2("Weather Wisdom Advisory Engine")
-    p = doc.add_paragraph()
-    p.add_run("A dedicated smart recommendation engine that analyzes real-feel temperature, wind chill, and UV to provide instant advice:")
-    add_bullet("Actionable attire guidance (breathable cottons, light jackets, thermal layers, raincoats, or umbrellas).", "🧥 Outfit Recommendations: ")
-    add_bullet("Hydration alerts, sunscreen reminders, and sudden pressure fluctuation warnings.", "🩺 Health & Wellness: ")
-    add_bullet("Advance notices on upcoming rain windows, road spray, or low visibility for commuters.", "🚗 Commute & Travel: ")
-
-    add_heading_2("Driving & Commute Safety Index")
-    p = doc.add_paragraph()
-    p.add_run(
-        "Whether you're driving to work, riding a motorcycle, or commuting, the Driving Commute Safety card computes real-time roadway risk:\n"
-        "• Road Risk Rating: Safe (Green), Moderate Caution (Amber), or Severe Caution (Red).\n"
-        "• Hazard Breakdown: Calculates precipitation rate, road slickness factor, crosswind gust hazards, and atmospheric visibility.\n"
-        "• Driver Advice: Recommends headlight usage, increased following distance, and hydroplaning precautions."
     )
 
     # -------------------------------------------------------------
@@ -181,14 +165,13 @@ def create_user_guide():
         "It highlights critical solar milestones including Sunrise, Morning Golden Hour (ideal for photography), Solar Noon, Peak UV Hour, Sunset, Dusk, and Night Moon Phases."
     )
 
-    add_heading_2("Comprehensive Biometeorology & Health Hub")
+    add_heading_2("Comprehensive Biometeorology & Air Quality Hub")
     p = doc.add_paragraph()
     p.add_run("Designed for wellness and environmental sensitivity, this suite tracks invisible atmospheric factors that impact health:")
-    add_bullet("Forecasts botanical allergens (Grass, Birch, Weed pollen) to help allergy and asthma sufferers plan ahead.", "🌸 Pollen & Allergy Index: ")
     add_bullet("Monitors rapid drops in barometric pressure combined with high humidity that often trigger joint aches and arthritis flares.", "🦴 Joint Pain & Arthritis Sensitivity: ")
     add_bullet("Identifies sudden atmospheric pressure swings known to provoke vascular headaches and migraines.", "⚡ Migraine Risk Index: ")
     add_bullet("Displays current solar UV intensity along with safe unprotected sun exposure time estimates.", "☀️ UV Index & Sun Protection: ")
-    add_bullet("Comprehensive European Air Quality Index with fine particulate (PM2.5), coarse dust (PM10), Ozone, NO2, and SO2 breakdowns.", "🍃 Air Quality (AQI): ")
+    add_bullet("US Air Quality Index with fine particulate (PM2.5), coarse dust (PM10), Ozone (O3), and NO2 breakdowns.", "🍃 Air Quality (AQI): ")
 
     # -------------------------------------------------------------
     # 4. LIFESTYLE ADVISORIES & 48-HOUR TIME TRAVEL
@@ -217,11 +200,11 @@ def create_user_guide():
     # -------------------------------------------------------------
     add_heading_1("5. Interactive Radar, Soundscapes & Sharing")
 
-    add_heading_2("Interactive Multi-Layer Weather Radar")
+    add_heading_2("Keyless Interactive Weather Map & Spotter")
     p = doc.add_paragraph()
     p.add_run(
-        "Tap the radar button to open a high-performance interactive Leaflet map. "
-        "Switch seamlessly between Precipitation Radar, Temperature Heatmap, Wind Streamlines, and Cloud Satellites. Tap anywhere on the globe to inspect local conditions."
+        "Tap the map button to open a high-performance interactive Leaflet map with zero API keys required and no watermarks. "
+        "Powered by Esri Dark Canvas, OpenStreetMap, and high-definition Satellite layers. Tap anywhere on the globe in Spotter mode to inspect real-time localized conditions."
     )
 
     add_heading_2("Ambient Weather Soundscape Player")
@@ -257,8 +240,14 @@ def create_user_guide():
         "Whenever the engineering team publishes an update, the app automatically downloads and applies the latest version in the background upon launch."
     )
 
+    add_heading_2("Optimized ~22-24MB Build Footprint")
+    p = doc.add_paragraph()
+    p.add_run(
+        "Built with ProGuard/R8 dead-code stripping and targeted arm64-v8a native packaging to ensure a super lightweight ~22-24MB APK size on your device."
+    )
+
     add_tip_box(
-        "Thank you for using K & A Weather! For questions, suggestions, or feedback, visit our GitHub repository or reach out to the development team.",
+        "Thank you for using K & A Weather! For questions, suggestions, or feedback, reach out to the development team.",
         "ENJOY"
     )
 

@@ -9,7 +9,7 @@
 ![EAS Update](https://img.shields.io/badge/EAS-OTA_Updates-24292e?style=for-the-badge&logo=expo&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)
 
-**A next-generation mobile weather application engineered for hyper-local precision, biometeorological health intelligence, commute safety, and instant offline responsiveness.**
+**A next-generation mobile weather application engineered for hyper-local precision, biometeorological atmospheric intelligence, and instant offline responsiveness.**
 
 [Features](#-key-features) • [Architecture](#-system-architecture) • [Component Ecosystem](#-component-ecosystem) • [Getting Started](#-getting-started) • [Deployment & OTA](#-ci--over-the-air-ota-updates) • [Telemetry](#-product-analytics--telemetry)
 
@@ -21,7 +21,7 @@
 
 **K & A Weather** is a modern, high-performance mobile meteorological suite built with React Native and Expo SDK 54. Designed around an offline-first architecture, the application delivers sub-50ms cold-start loading, serverless client-side data synthesis from global meteorological models (Open-Meteo), and an intuitive glassmorphic design system that responds dynamically to solar positioning and atmospheric conditions.
 
-Beyond standard temperature and precipitation forecasts, K & A Weather functions as an everyday life assistant—providing biometeorological health metrics (joint pain, migraine risk, pollen), driving commute safety analyses, lifestyle advisory scoring (running, cycling, stargazing, laundry), and ambient weather soundscapes.
+Beyond standard temperature and precipitation forecasts, K & A Weather provides biometeorological health metrics (joint pain, migraine risk, particulate AQI), lifestyle advisory scoring (running, cycling, stargazing, laundry drying, car washing), and ambient weather soundscapes.
 
 ---
 
@@ -31,29 +31,18 @@ Beyond standard temperature and precipitation forecasts, K & A Weather functions
 - **Natural Language Summaries**: Generates human-like, time-sensitive briefings (morning, afternoon, evening, night).
 - **Day-over-Day Comparisons**: Instant contextual cues explaining whether today feels warmer, cooler, or more humid compared to yesterday.
 
-### 💡 2. Weather Wisdom & Advisory Engine
-- **Outfit & Layering Recommendations**: Intelligent advice on attire (breathable fabrics, jackets, thermal wear, waterproofs) based on real-feel temperatures and wind chill.
-- **Health & Safety Alerts**: UV protection warnings, hydration advisories, and sudden pressure change notices.
-- **Travel & Commute Insights**: Proactive alerts for upcoming rain windows, road slickness, and low-visibility conditions.
-
-### 🚗 3. Commute & Driving Safety Index
-- **Dynamic Safety Scoring**: Evaluates roadway hazard levels (*Safe*, *Moderate Caution*, *Severe Caution*).
-- **Multi-Factor Risk Analysis**: Combines precipitation intensity, road slickness factors, wind gust crosswind hazards, and atmospheric visibility.
-- **Actionable Driver Guidance**: Recommends headlight usage, increased braking distances, and hydroplaning precautions.
-
-### ☀️ 4. Celestial Arc & Solar Position Tracker
+### ☀️ 2. Celestial Arc & Solar Position Tracker
 - **Real-Time Celestial Arc**: Parabolic trajectory tracker visualizing the live position of the sun or moon relative to the horizon.
 - **Milestone Timings**: Exact calculations for Sunrise, Golden Hour (Morning & Evening), Solar Noon, Peak UV Hour, Sunset, and Dusk.
 - **Lunar Phase Tracking**: Nighttime mode calculating moon visibility and phase.
 
-### 🩺 5. Biometeorological Health Suite
-- **🌸 Pollen & Allergy Levels**: Grass, tree, and weed pollen forecasts.
+### 🩺 3. Biometeorological Health Suite
 - **🦴 Joint Pain & Arthritis Index**: Monitors rapid drops in barometric pressure combined with high humidity.
 - **⚡ Migraine Sensitivity Rating**: Alerts users susceptible to atmospheric pressure shifts.
 - **☀️ UV Radiation & Safe Exposure**: Real-time UV index with safe skin exposure estimates.
-- **🍃 Air Quality Breakdown (AQI)**: Detailed European Air Quality Index with PM2.5, PM10, Ozone, NO2, and SO2 metrics.
+- **🍃 Air Quality Breakdown (AQI)**: US Air Quality Index with PM2.5, PM10, Ozone, and NO2 metrics.
 
-### 🏃 6. Lifestyle & Activity Suitability Index
+### 🏃 4. Lifestyle & Activity Suitability Index
 - **Running & Jogging**: Evaluates heat stress, air quality, and surface friction.
 - **Cycling & Commuting**: Evaluates wind gusts, headwind intensity, and road wetness.
 - **Stargazing & Astronomy**: Factors in cloud cover percentage, atmospheric visibility, and lunar illumination.
@@ -61,28 +50,28 @@ Beyond standard temperature and precipitation forecasts, K & A Weather functions
 - **Laundry Drying**: Evaporation rate calculated from solar radiation, wind speed, and humidity.
 - **Car Washing**: 48-hour precipitation probability forecast to avoid post-wash rain.
 
-### ⏳ 7. 48-Hour Interactive Time Travel Slider
+### ⏳ 5. 48-Hour Interactive Time Travel Slider
 - **Scrub Through Time**: Drag the interactive time slider forward through 48 hours to preview upcoming temperature curves, cloud cover, and wind transitions before they occur.
 - **Dynamic Backdrop Sync**: The UI background and sky gradient dynamically transition according to simulated time and condition codes.
 
-### 🗺️ 8. Interactive Multi-Layer Weather Radar
-- **High-Performance Map**: Embedded interactive Leaflet map with smooth tile rendering.
-- **Multi-Layer Radar Overlays**: Switch between Precipitation Radar, Temperature Heatmap, Wind Streamlines, and Cloud Satellites.
-- **Interactive Geocoding Pin**: Tap anywhere on the globe to inspect immediate localized weather conditions.
+### 🗺️ 6. Interactive Multi-Layer Weather Radar
+- **High-Performance Keyless Map**: Embedded interactive Leaflet map powered by Esri World Dark Canvas, OpenStreetMap, and High-Resolution Satellite imagery with zero watermarks and no API keys required.
+- **Live Precipitation Radar Overlays**: Satellite Doppler rain and storm overlays.
+- **Interactive Spotter Mode**: Tap anywhere on the globe to inspect immediate localized weather coordinates, temperature, wind, and humidity.
 
-### 🏙️ 9. Multi-City Comparative Dashboard
+### 🏙️ 7. Multi-City Comparative Dashboard
 - **Side-by-Side Matrix**: Compare up to 5 saved cities across Temperature, Humidity, Wind, UV, and Air Quality simultaneously.
 - **Quick-Access Chips**: Instant switching between favorite cities with haptic-enabled pill filters.
 
-### 🎧 10. Ambient Weather Soundscapes
+### 🎧 8. Ambient Weather Soundscapes
 - **High-Fidelity Audio**: Integrated Expo-AV background player featuring relaxing ambient audio (Rain on Roof, Mountain Wind, Forest Birds, Ocean Swell).
 - **Sleep & Focus Companion**: Ambient sounds loop smoothly with native audio session management.
 
-### 📤 11. Social Weather Share Card Generator
+### 📤 9. Social Weather Share Card Generator
 - **Visual Card Generator**: Renders beautiful weather snapshot cards with city backdrops, date badges, and full metric breakdowns.
 - **Native OS Sharing**: Integrated `Share.share()` sheet to easily post to Instagram, WhatsApp, X/Twitter, or Messages.
 
-### 📴 12. Offline-First Caching & Sub-50ms Cold Starts
+### 📴 10. Offline-First Caching & Sub-50ms Cold Starts
 - **Dual-Tier Cache**: Immediate hydration from `@react-native-async-storage/async-storage` and `expo-file-system`.
 - **Zero-Blank Startup**: Instant rendering of cached forecast snapshots upon launch, guaranteeing full functionality without an active network.
 
@@ -101,14 +90,12 @@ graph TD
     
     A --> G[Core UI Components]
     G --> H[WeatherNarrative: Natural Language Briefings]
-    G --> I[WeatherWisdom: AI Advisory Engine]
-    G --> J[DrivingCommuteSafety: Road Risk Scoring]
-    G --> K[CelestialArc: Sun/Moon Tracker]
-    G --> L[HealthMetrics: Biometeorology Suite]
-    G --> M[LifestyleAdvisories: Activity Indexes]
-    G --> N[TimeTravelSlider: 48h Forecast Scrubbing]
-    G --> O[WeatherMap: Multi-Layer Radar]
-    G --> P[MultiCityDashboard: Comparative Matrix]
+    G --> I[CelestialArc: Sun/Moon Tracker]
+    G --> J[HealthMetrics: Biometeorology & AQI Suite]
+    G --> K[LifestyleAdvisories: Activity Indexes]
+    G --> L[TimeTravelSlider: 48h Forecast Scrubbing]
+    G --> M[WeatherMap: Keyless Interactive Radar]
+    G --> N[MultiCityDashboard: Comparative Matrix]
     G --> Q[SoundscapePlayer: Ambient Audio Engine]
     G --> R[WeatherShareCard: Social Export Engine]
 ```
@@ -124,20 +111,20 @@ WEATHER_APP/
 │   ├── index.tsx                     # Main weather dashboard & unified scrollview
 │   └── +not-found.tsx                # 404 fallback screen
 ├── assets/                           # Bundled application assets
+│   ├── docs/                         # App screenshots & documentation figures
 │   └── images/                       # App icons, splash screens, favicons
 ├── components/                       # Modular UI & intelligence components
 │   ├── CelestialArc.tsx              # Sun & Moon trajectory tracker
-│   ├── DrivingCommuteSafety.tsx      # Road hazard & commute safety index
-│   ├── HealthMetrics.tsx             # Biometeorology, pollen, joint pain & AQI
+│   ├── HealthMetrics.tsx             # Biometeorology, joint pain, migraine & AQI
 │   ├── LifestyleAdvisories.tsx       # Activity suitability scoring cards
 │   ├── MultiCityDashboard.tsx        # Multi-city comparison matrix
+│   ├── SettingsModal.tsx             # Application preferences & unit toggles
 │   ├── SoundscapePlayer.tsx          # Ambient audio soundscape player
 │   ├── TimeTravelSlider.tsx          # 48-hour scrubbing time travel slider
-│   ├── WeatherMap.tsx                # Interactive multi-layer radar & heatmap
+│   ├── WeatherMap.tsx                # Keyless interactive radar & spotter map
 │   ├── WeatherNarrative.tsx          # AI morning/evening contextual briefings
 │   ├── WeatherOverlay.tsx            # Animated rain/snow/cloud physics overlay
-│   ├── WeatherShareCard.tsx          # Stylized social weather export card
-│   └── WeatherWisdom.tsx             # Outfit, health, and commute advice engine
+│   └── WeatherShareCard.tsx          # Stylized social weather export card
 ├── constants/                        # Theme colors, tokens, and style constants
 ├── hooks/                            # Custom React Hooks
 │   ├── useWeather.ts                 # Central data fetcher, cache & state machine
@@ -163,10 +150,11 @@ WEATHER_APP/
 | **Toolchain** | [Expo SDK 54](https://expo.dev/) | Managed runtime, native APIs, and deployment |
 | **Routing** | [Expo Router v6](https://docs.expo.dev/router/introduction/) | File-based navigation system |
 | **Language** | [TypeScript 5.9.2](https://www.typescriptlang.org/) | Strictly typed static analysis |
+| **JS Engine** | Hermes | Bytecode compiled JavaScript engine |
 | **Storage** | `@react-native-async-storage/async-storage` | High-performance offline caching |
 | **Audio** | `expo-av` | Low-latency ambient soundscape playback |
 | **Haptics** | `expo-haptics` | Native tactile interaction feedback |
-| **Maps** | `react-native-webview` / Leaflet | Lightweight, multi-layer weather radar tiles |
+| **Maps** | `react-native-webview` / Leaflet / Esri | Lightweight, keyless weather radar & maps |
 | **Analytics** | `posthog-react-native` | Privacy-focused user telemetry & insights |
 | **CI / CD** | GitHub Actions & Expo EAS | Automated Over-The-Air updates on git push |
 
@@ -215,16 +203,11 @@ K & A Weather is configured with **continuous Over-The-Air (OTA) delivery** usin
 3. EAS publishes the update to the `production` channel.
 4. Installed apps seamlessly download the latest features on their next launch without requiring an APK re-install or app store update!
 
-### Manual OTA Deployment:
-```bash
-npx eas-cli update --branch production --message "feat: update weather metrics"
-```
-
-### Building Standalone APKs (Android):
+### Building Lightweight Standalone APKs (Android):
 ```bash
 npx eas-cli build -p android --profile preview
 ```
-*Configured in `eas.json` with `arm64-v8a` architecture optimization to produce lightweight (~25MB) APK binaries.*
+*Configured in `eas.json` with `arm64-v8a` architecture optimization and R8 ProGuard shrinking to produce lightweight (~22–24MB) APK binaries.*
 
 ---
 
