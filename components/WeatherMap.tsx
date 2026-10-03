@@ -25,12 +25,6 @@ export interface SavedCity {
   temp?: number;
 }
 
-interface FrameData {
-  time: number;
-  path: string;
-  type: 'past' | 'nowcast';
-}
-
 interface SpotData {
   name: string;
   temp: number;
@@ -54,10 +48,7 @@ export const WeatherMap: React.FC<Props> = ({
   savedCities = [], 
   theme 
 }) => {
-  const [radarFrames, setRadarFrames] = useState<FrameData[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [latestRadarTimestamp, setLatestRadarTimestamp] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [webViewReady, setWebViewReady] = useState(false);
   
@@ -76,35 +67,23 @@ export const WeatherMap: React.FC<Props> = ({
   const spotFade = useRef(new Animated.Value(0)).current;
 
   const webViewRef = useRef<WebView>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Synchronize radar data fetching when visible
+  // Fetch latest radar layer when visible
   useEffect(() => {
     if (visible) {
-      fetchRadarData();
+      fetchLatestRadar();
       startAutoRefresh();
     } else {
-      stopAnimation();
       stopAutoRefresh();
       setSpotLocation(null);
       setSpotData(null);
       setIsSpotterActive(false);
     }
     return () => {
-      stopAnimation();
       stopAutoRefresh();
     };
   }, [visible]);
-
-  // Handle play/pause animation cycle
-  useEffect(() => {
-    if (isPlaying && radarFrames.length > 0) {
-      startAnimation();
-    } else {
-      stopAnimation();
-    }
-  }, [isPlaying, radarFrames, playbackSpeed]);
 
   // Spotter hint banner fade
   useEffect(() => {
@@ -115,18 +94,18 @@ export const WeatherMap: React.FC<Props> = ({
     }).start();
   }, [isSpotterActive]);
 
-  const fetchRadarData = async () => {
+  const fetchLatestRadar = async () => {
     try {
       setLoading(true);
       const res = await axios.get('https://api.rainviewer.com/public/weather-maps.json', { timeout: 10000 });
       if (res.data?.radar) {
-        const pastRadar = (res.data.radar.past || []).map((f: any) => ({ ...f, type: 'past' as const }));
-        const nowcastRadar = (res.data.radar.nowcast || []).map((f: any) => ({ ...f, type: 'nowcast' as const }));
-        const allFrames = [...pastRadar, ...nowcastRadar];
-        setRadarFrames(allFrames);
-        if (allFrames.length > 0) {
-          const defaultIdx = pastRadar.length > 0 ? pastRadar.length - 1 : 0;
-          setCurrentIndex(defaultIdx);
+        const past = res.data.radar.past || [];
+        const nowcast = res.data.radar.nowcast || [];
+        const all = [...past, ...nowcast];
+        if (all.length > 0) {
+          // Use the latest past frame or fallback to latest available
+          const latestFrame = past.length > 0 ? past[past.length - 1] : all[all.length - 1];
+          setLatestRadarTimestamp(latestFrame.time);
         }
       }
     } catch (e) {
@@ -138,7 +117,7 @@ export const WeatherMap: React.FC<Props> = ({
 
   const startAutoRefresh = () => {
     stopAutoRefresh();
-    refreshTimerRef.current = setInterval(fetchRadarData, 5 * 60 * 1000);
+    refreshTimerRef.current = setInterval(fetchLatestRadar, 5 * 60 * 1000);
   };
 
   const stopAutoRefresh = () => {
@@ -148,28 +127,10 @@ export const WeatherMap: React.FC<Props> = ({
     }
   };
 
-  const startAnimation = () => {
-    stopAnimation();
-    const interval = 1000 / playbackSpeed;
-    timerRef.current = setInterval(() => {
-      setCurrentIndex((prev) => (radarFrames.length > 0 ? (prev + 1) % radarFrames.length : 0));
-    }, interval);
-  };
-
-  const stopAnimation = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  const currentFrame = radarFrames[currentIndex];
-  const currentTimestamp = currentFrame?.time;
-
   const tileUrl = useMemo(() => {
-    if (!currentTimestamp) return '';
-    return `https://tilecache.rainviewer.com/v2/radar/${currentTimestamp}/256/{z}/{x}/{y}/1/1_1.png`;
-  }, [currentTimestamp]);
+    if (!latestRadarTimestamp) return '';
+    return `https://tilecache.rainviewer.com/v2/radar/${latestRadarTimestamp}/256/{z}/{x}/{y}/1/1_1.png`;
+  }, [latestRadarTimestamp]);
 
   // Sync radar tile update with WebView
   useEffect(() => {
@@ -289,11 +250,6 @@ export const WeatherMap: React.FC<Props> = ({
 
   const toggleBaseMap = () => setIsSatelliteBase((prev) => !prev);
   const toggleMapStyle = () => setMapStyle(mapStyle === 'dark' ? 'standard' : 'dark');
-  const toggleSpeed = () => {
-    const speeds = [1, 2, 4];
-    const nextIdx = (speeds.indexOf(playbackSpeed) + 1) % speeds.length;
-    setPlaybackSpeed(speeds[nextIdx]);
-  };
 
   const clearSpotter = () => {
     setSpotLocation(null);
@@ -338,11 +294,27 @@ export const WeatherMap: React.FC<Props> = ({
     .pin-dot {
       width: 14px;
       height: 14px;
-      border-radius: 50%;
       background: #38bdf8;
-      border: 2.5px solid #ffffff;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
       box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
-      z-index: 2;
+      z-index: 10;
+    }
+
+    .city-chip {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 4px 8px;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .spotter-marker {
@@ -353,95 +325,70 @@ export const WeatherMap: React.FC<Props> = ({
     }
     .spotter-ring {
       position: absolute;
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background: rgba(245, 158, 11, 0.3);
-      border: 1.5px solid #f59e0b;
-      animation: pulse-anim 1.5s infinite ease-out;
+      border: 2px dashed #38bdf8;
+      animation: spin-spot 4s linear infinite;
     }
     .spotter-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
+      width: 10px;
+      height: 10px;
       background: #f59e0b;
-      border: 2px solid #ffffff;
-      box-shadow: 0 0 10px rgba(245, 158, 11, 0.9);
-      z-index: 2;
+      border: 2px solid #fff;
+      border-radius: 50%;
     }
-
-    .city-badge {
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 12px;
-      padding: 4px 8px;
-      color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transform: translate(-50%, -50%);
-    }
-    .city-temp {
-      color: #38bdf8;
-      font-weight: 800;
+    @keyframes spin-spot {
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script>
-    var map = L.map('map', {
-      center: [${initialLocation.lat}, ${initialLocation.lon}],
-      zoom: 6,
-      zoomControl: false,
-      attributionControl: false
-    });
-
     var baseLayers = {
-      dark: L.layerGroup([
-        L.tileLayer('https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 }),
-        L.tileLayer('https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 })
-      ]),
+      dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }),
       standard: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }),
       satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
     };
 
-    var currentBase = baseLayers.dark.addTo(map);
+    var map = L.map('map', {
+      center: [${initialLocation.lat}, ${initialLocation.lon}],
+      zoom: 7,
+      layers: [baseLayers.dark],
+      zoomControl: false,
+      attributionControl: false
+    });
+
+    var currentBase = baseLayers.dark;
     var radarLayer = null;
     var spotterMarker = null;
 
-    var mainIcon = L.divIcon({
+    // Current location pulsing pin
+    var currentIcon = L.divIcon({
       className: 'custom-icon',
       html: '<div class="pulse-marker"><div class="pulse-ring"></div><div class="pin-dot"></div></div>',
       iconSize: [46, 46],
       iconAnchor: [23, 23]
     });
-    L.marker([${initialLocation.lat}, ${initialLocation.lon}], { icon: mainIcon }).addTo(map);
+    L.marker([${initialLocation.lat}, ${initialLocation.lon}], { icon: currentIcon }).addTo(map);
 
-    try {
-      var saved = ${savedCitiesJson};
-      if (Array.isArray(saved)) {
-        saved.forEach(function(city) {
-          if (city && city.latitude && city.longitude) {
-            var tempStr = (city.temp !== undefined && city.temp !== null && city.temp !== 0) ? '<span class="city-temp">' + Math.round(city.temp) + '°</span> ' : '';
-            var cityIcon = L.divIcon({
-              className: 'custom-icon',
-              html: '<div class="city-badge">' + tempStr + city.name + '</div>',
-              iconSize: [100, 26],
-              iconAnchor: [50, 13]
-            });
-            L.marker([city.latitude, city.longitude], { icon: cityIcon }).addTo(map);
-          }
+    // Render Saved Cities
+    var savedCities = ${savedCitiesJson};
+    if (savedCities && savedCities.length > 0) {
+      savedCities.forEach(function(city) {
+        var cityHtml = '<div class="city-chip"><span>' + city.name + '</span>' + (city.temp ? '<span style="color:#38bdf8;">' + Math.round(city.temp) + '°</span>' : '') + '</div>';
+        var cityIcon = L.divIcon({
+          className: 'custom-icon',
+          html: cityHtml,
+          iconSize: [80, 24],
+          iconAnchor: [40, 12]
         });
-      }
-    } catch(e) {}
+        L.marker([city.latitude, city.longitude], { icon: cityIcon }).addTo(map);
+      });
+    }
 
+    // Handle Map Click
     map.on('click', function(e) {
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -540,9 +487,8 @@ export const WeatherMap: React.FC<Props> = ({
               <View style={styles.headerTitleContainer}>
                 <Text style={styles.title}>Weather Explorer</Text>
               </View>
-              <TouchableOpacity onPress={toggleSpeed} style={styles.speedBtn}>
-                <Text style={styles.speedLabel}>SPEED</Text>
-                <Text style={styles.speedText}>{playbackSpeed}x</Text>
+              <TouchableOpacity onPress={reCenter} style={styles.actionBtn}>
+                <Ionicons name="locate" size={20} color="#38bdf8" />
               </TouchableOpacity>
             </View>
             
@@ -652,51 +598,6 @@ export const WeatherMap: React.FC<Props> = ({
               <ActivityIndicator size="large" color="#38bdf8" />
             </View>
           )}
-
-          {/* Bottom Playback & Scrubber Controls */}
-          <View style={styles.bottomControls} pointerEvents="box-none">
-            <BlurView intensity={90} tint="dark" style={styles.controlsCard}>
-              <View style={styles.playbackHeader}>
-                <View>
-                  <Text style={styles.timeText}>
-                    {currentTimestamp ? new Date(currentTimestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                  </Text>
-                  <Text style={[styles.typeLabel, currentFrame?.type === 'nowcast' && { color: '#f59e0b' }]}>
-                    {currentFrame?.type === 'nowcast' ? 'PREDICTED FUTURE' : 'PRECIPITATION RADAR'}
-                  </Text>
-                </View>
-                
-                <View style={styles.legend}>
-                  <View style={styles.legendRow}>
-                    <View style={[styles.legendPill, { backgroundColor: 'rgba(56, 189, 248, 0.7)' }]} />
-                    <View style={[styles.legendPill, { backgroundColor: 'rgba(34, 197, 94, 0.7)' }]} />
-                    <View style={[styles.legendPill, { backgroundColor: 'rgba(234, 179, 8, 0.7)' }]} />
-                    <View style={[styles.legendPill, { backgroundColor: 'rgba(239, 68, 68, 0.7)' }]} />
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.scrubberRow}>
-                <TouchableOpacity onPress={() => setIsPlaying(!isPlaying)} style={styles.miniPlayBtn}>
-                  <Ionicons name={isPlaying ? "pause" : "play"} size={24} color="#fff" />
-                </TouchableOpacity>
-                
-                <View style={styles.scrubberContainer}>
-                  {radarFrames.map((frame, idx) => (
-                    <TouchableOpacity 
-                      key={frame.time} 
-                      style={[
-                        styles.scrubBar, 
-                        idx <= currentIndex && { backgroundColor: frame.type === 'nowcast' ? '#f59e0b' : '#38bdf8' },
-                        idx === currentIndex && { height: 8, backgroundColor: '#fff' }
-                      ]} 
-                      onPress={() => { setIsPlaying(false); setCurrentIndex(idx); }}
-                    />
-                  ))}
-                </View>
-              </View>
-            </BlurView>
-          </View>
         </View>
       </View>
     </Modal>
@@ -720,9 +621,6 @@ const styles = StyleSheet.create({
   actionBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)' },
   headerTitleContainer: { alignItems: 'center' },
   title: { color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
-  speedBtn: { width: 50, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(56, 189, 248, 0.15)', borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.3)' },
-  speedLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: '800' },
-  speedText: { color: '#38bdf8', fontWeight: '800', fontSize: 12, marginTop: -2 },
 
   sideControls: { position: 'absolute', top: 160, right: 15, alignItems: 'flex-end', gap: 12 },
   fabBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#38bdf8', alignItems: 'center', justifyContent: 'center', shadowColor: '#38bdf8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 },
@@ -747,16 +645,4 @@ const styles = StyleSheet.create({
   spotCondition: { color: '#38bdf8', fontSize: 11, fontWeight: '900', letterSpacing: 1 },
 
   loadingContainer: { position: 'absolute', top: height / 2 - 20, left: width / 2 - 20, zIndex: 100 },
-  bottomControls: { position: 'absolute', bottom: 20, left: 15, right: 15 },
-  controlsCard: { borderRadius: 24, padding: 16, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  playbackHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  timeText: { color: '#fff', fontSize: 24, fontWeight: '900', fontVariant: ['tabular-nums'] },
-  typeLabel: { color: '#38bdf8', fontSize: 9, fontWeight: '800', letterSpacing: 0.5, marginTop: 1 },
-  scrubberRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  miniPlayBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#38bdf8', alignItems: 'center', justifyContent: 'center' },
-  scrubberContainer: { flex: 1, flexDirection: 'row', height: 12, gap: 3, alignItems: 'center' },
-  scrubBar: { flex: 1, height: 3, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 1.5 },
-  legend: { alignItems: 'flex-end' },
-  legendRow: { flexDirection: 'row', gap: 2 },
-  legendPill: { width: 15, height: 4, borderRadius: 2 },
 });
