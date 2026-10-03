@@ -332,20 +332,31 @@ export const WeatherMap: React.FC<Props> = ({
 <body>
   <div id="map"></div>
   <script>
+    var darkBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { 
+      maxZoom: 16,
+      attribution: ''
+    });
+    var darkRef = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { 
+      maxZoom: 16,
+      attribution: '',
+      zIndex: 5
+    });
+    var darkGroup = L.layerGroup([darkBase, darkRef]);
+
+    var standardLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+      maxZoom: 19,
+      attribution: ''
+    });
+
+    var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
+      maxZoom: 19,
+      attribution: ''
+    });
+
     var baseLayers = {
-      dark: L.tileLayer('https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png', { 
-        maxZoom: 19,
-        subdomains: 'abcd',
-        attribution: ''
-      }),
-      standard: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-        maxZoom: 19,
-        attribution: ''
-      }),
-      satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
-        maxZoom: 19,
-        attribution: ''
-      })
+      dark: darkGroup,
+      standard: standardLayer,
+      satellite: satelliteLayer
     };
 
     var map = L.map('map', {
