@@ -48,7 +48,7 @@ export const WeatherMap: React.FC<Props> = ({
   savedCities = [], 
   theme 
 }) => {
-  const [latestRadarTimestamp, setLatestRadarTimestamp] = useState<number | null>(null);
+  const [radarTileUrl, setRadarTileUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [webViewReady, setWebViewReady] = useState(false);
   
@@ -97,19 +97,22 @@ export const WeatherMap: React.FC<Props> = ({
   const fetchLatestRadar = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('https://api.rainviewer.com/public/weather-maps.json', { timeout: 10000 });
+      const res = await axios.get('https://api.rainviewer.com/public/weather-maps.json', { timeout: 8000 });
       if (res.data?.radar) {
+        const host = res.data.host || 'https://tilecache.rainviewer.com';
         const past = res.data.radar.past || [];
         const nowcast = res.data.radar.nowcast || [];
         const all = [...past, ...nowcast];
         if (all.length > 0) {
-          // Use the latest past frame or fallback to latest available
           const latestFrame = past.length > 0 ? past[past.length - 1] : all[all.length - 1];
-          setLatestRadarTimestamp(latestFrame.time);
+          if (latestFrame?.path) {
+            const url = `${host}${latestFrame.path}/256/{z}/{x}/{y}/1/1_1.png`;
+            setRadarTileUrl(url);
+          }
         }
       }
     } catch (e) {
-      console.warn('Failed to fetch radar data from RainViewer', e);
+      console.warn('Radar fetch notice (non-fatal, map base active):', e);
     } finally {
       setLoading(false);
     }
@@ -127,17 +130,12 @@ export const WeatherMap: React.FC<Props> = ({
     }
   };
 
-  const tileUrl = useMemo(() => {
-    if (!latestRadarTimestamp) return '';
-    return `https://tilecache.rainviewer.com/v2/radar/${latestRadarTimestamp}/256/{z}/{x}/{y}/1/1_1.png`;
-  }, [latestRadarTimestamp]);
-
   // Sync radar tile update with WebView
   useEffect(() => {
-    if (webViewReady && tileUrl) {
-      webViewRef.current?.injectJavaScript(`if (window.updateRadar) { window.updateRadar("${tileUrl}"); } true;`);
+    if (webViewReady && radarTileUrl) {
+      webViewRef.current?.injectJavaScript(`if (window.updateRadar) { window.updateRadar("${radarTileUrl}"); } true;`);
     }
-  }, [tileUrl, webViewReady]);
+  }, [radarTileUrl, webViewReady]);
 
   // Sync base layer change
   useEffect(() => {
@@ -171,7 +169,7 @@ export const WeatherMap: React.FC<Props> = ({
     
     try {
       const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`;
-      const geoUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
+      const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${latitude.toFixed(2)},${longitude.toFixed(2)}&count=1&language=en&format=json`;
 
       const weatherRes = await axios.get(weatherUrl, { timeout: 8000 }).catch(err => {
         console.warn('Weather fetch error', err);
@@ -189,25 +187,13 @@ export const WeatherMap: React.FC<Props> = ({
         });
       }
 
-      const geoRes = await axios.get(geoUrl, { timeout: 8000 }).catch(err => {
-        console.warn('Geo fetch error', err);
-        return null;
+      setSpotData(prev => prev ? { ...prev, name: `LAT: ${latitude.toFixed(2)}, LON: ${longitude.toFixed(2)}` } : {
+        name: `LAT: ${latitude.toFixed(2)}, LON: ${longitude.toFixed(2)}`,
+        temp: 0,
+        condition: 'Scanning...',
+        wind: 0,
+        humidity: 0
       });
-
-      if (geoRes && geoRes.data) {
-        const loc = geoRes.data;
-        const finalName = loc.locality || loc.city || loc.principalSubdivision || `COORDS: ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-        
-        setSpotData(prev => prev ? { ...prev, name: finalName } : {
-          name: finalName,
-          temp: 0,
-          condition: 'Scanning...',
-          wind: 0,
-          humidity: 0
-        });
-      } else {
-        setSpotData(prev => prev ? { ...prev, name: `POINT: ${latitude.toFixed(2)}, ${longitude.toFixed(2)}` } : null);
-      }
     } catch (err) {
       console.warn('General spotter error', err);
     } finally {
@@ -222,8 +208,8 @@ export const WeatherMap: React.FC<Props> = ({
         handleSpotPress(data.lat, data.lng);
       } else if (data.type === 'MAP_READY') {
         setWebViewReady(true);
-        if (tileUrl) {
-          webViewRef.current?.injectJavaScript(`if (window.updateRadar) { window.updateRadar("${tileUrl}"); } true;`);
+        if (radarTileUrl) {
+          webViewRef.current?.injectJavaScript(`if (window.updateRadar) { window.updateRadar("${radarTileUrl}"); } true;`);
         }
       }
     } catch (err) {
@@ -347,9 +333,19 @@ export const WeatherMap: React.FC<Props> = ({
   <div id="map"></div>
   <script>
     var baseLayers = {
-      dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }),
-      standard: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }),
-      satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
+      dark: L.tileLayer('https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png', { 
+        maxZoom: 19,
+        subdomains: 'abcd',
+        attribution: ''
+      }),
+      standard: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+        maxZoom: 19,
+        attribution: ''
+      }),
+      satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
+        maxZoom: 19,
+        attribution: ''
+      })
     };
 
     var map = L.map('map', {
@@ -419,7 +415,7 @@ export const WeatherMap: React.FC<Props> = ({
         radarLayer.setUrl(url);
       } else {
         radarLayer = L.tileLayer(url, {
-          opacity: 0.75,
+          opacity: 0.72,
           zIndex: 10,
           maxNativeZoom: 12,
           tileSize: 256
@@ -470,8 +466,8 @@ export const WeatherMap: React.FC<Props> = ({
           onMessage={handleWebViewMessage}
           onLoadEnd={() => {
             setWebViewReady(true);
-            if (tileUrl) {
-              webViewRef.current?.injectJavaScript(`if (window.updateRadar) { window.updateRadar("${tileUrl}"); } true;`);
+            if (radarTileUrl) {
+              webViewRef.current?.injectJavaScript(`if (window.updateRadar) { window.updateRadar("${radarTileUrl}"); } true;`);
             }
           }}
         />
