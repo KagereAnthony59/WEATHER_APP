@@ -12,7 +12,6 @@ import { LifestyleAdvisories } from '../components/LifestyleAdvisories';
 import { CelestialArc } from '../components/CelestialArc';
 import { HealthMetrics } from '../components/HealthMetrics';
 import { TimeTravelSlider } from '../components/TimeTravelSlider';
-import { WeatherWisdom } from '../components/WeatherWisdom';
 import { WeatherShareCard } from '../components/WeatherShareCard';
 import { SettingsModal } from '../components/SettingsModal';
 import { triggerImpactLight, triggerImpactMedium, triggerSelection } from '../utils/haptics';
@@ -482,8 +481,6 @@ export default function WeatherScreen() {
                 is24Hour={is24Hour}
               />
 
-              {/* Weather Wisdom & Science Trivia */}
-              <WeatherWisdom theme={t} />
 
               {/* 2. 7-Day Forecast */}
               {weather.daily && (
